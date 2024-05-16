@@ -22,6 +22,8 @@ impl Lexer {
     }
 
     pub fn next(&mut self) -> Token {
+        self.skip_whitespace();
+
         let token = match self.ch {
             '=' => Token::new(TokenType::Assign, None),
             '+' => Token::new(TokenType::Plus, None),
@@ -33,6 +35,9 @@ impl Lexer {
             ';' => Token::new(TokenType::Semicolon, None),
             '\0' => Token::new(TokenType::Eof, None),
 
+            ch if is_ident_char(ch, true) => return self.read_ident(),
+            ch if ch.is_ascii_digit() => return self.read_num(),
+
             _ => Token::new(TokenType::Illegal, None),
         };
 
@@ -42,7 +47,27 @@ impl Lexer {
 }
 
 impl Lexer {
-    pub fn read(&mut self) {
+    fn read_ident(&mut self) -> Token {
+        let start = self.pos;
+
+        while is_ident_char(self.ch, false) {
+            self.read();
+        }
+        let ident: String = self.input[start..self.pos].iter().collect();
+        keyword_or_ident(ident)
+    }
+
+    fn read_num(&mut self) -> Token {
+        let start = self.pos;
+
+        while self.ch.is_ascii_digit() {
+            self.read();
+        }
+        let num: String = self.input[start..self.pos].iter().collect();
+        Token::new(TokenType::Number, Some(num))
+    }
+
+    fn read(&mut self) {
         self.ch = if self.read_pos >= self.input.len() {
             '\0'
         } else {
@@ -52,29 +77,114 @@ impl Lexer {
         self.pos = self.read_pos;
         self.read_pos += 1;
     }
+
+    fn skip_whitespace(&mut self) {
+        while self.ch.is_whitespace() {
+            self.read();
+        }
+    }
+}
+
+fn is_ident_char(ch: char, first: bool) -> bool {
+    if first {
+        matches!(ch, 'a'..='z' | 'A'..='Z' | '_')
+    } else {
+        matches!(ch, 'a'..='z' | 'A'..='Z' | '_' | '0'..='9')
+    }
+}
+
+fn keyword_or_ident(s: String) -> Token {
+    match s.as_str() {
+        "let" => Token::new(TokenType::Let, None),
+        "fn" => Token::new(TokenType::Fn, None),
+        _ => Token::new(TokenType::Ident, Some(s)),
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
 
+    #[derive(Debug)]
+    enum TestToken {
+        Token(TokenType),
+        Number(i64),
+        Ident(String),
+    }
+
+    impl PartialEq<Token> for TestToken {
+        fn eq(&self, other: &Token) -> bool {
+            match self {
+                TestToken::Number(x) => {
+                    other.ty == TokenType::Number && other.literal == TokenLiteral::Num(*x)
+                }
+                TestToken::Ident(s) => {
+                    other.ty == TokenType::Ident && other.literal == TokenLiteral::Ident(s.into())
+                }
+                TestToken::Token(t) => other.ty == *t,
+            }
+        }
+    }
+
     #[test]
     fn lexer_test() {
-        let input = "=+(){},;";
+        let input = r#"
+let five = 5;
+let ten = 10;
+
+let add = fn(x, y) {
+    x + y;
+};
+
+let result = add(five, ten);
+        "#;
 
         let expected = vec![
-            TokenType::Assign,
-            TokenType::Plus,
-            TokenType::LParen,
-            TokenType::RParen,
-            TokenType::LBrace,
-            TokenType::RBrace,
+            TestToken::Token(TokenType::Let),
+            TestToken::Ident("five".into()),
+            TestToken::Token(TokenType::Assign),
+            TestToken::Number(5),
+            TestToken::Token(TokenType::Semicolon),
+            //
+            TestToken::Token(TokenType::Let),
+            TestToken::Ident("ten".into()),
+            TestToken::Token(TokenType::Assign),
+            TestToken::Number(10),
+            TestToken::Token(TokenType::Semicolon),
+            //
+            TestToken::Token(TokenType::Let),
+            TestToken::Ident("add".into()),
+            TestToken::Token(TokenType::Assign),
+            TestToken::Token(TokenType::Fn),
+            TestToken::Token(TokenType::LParen),
+            TestToken::Ident("x".into()),
+            TestToken::Token(TokenType::Comma),
+            TestToken::Ident("y".into()),
+            TestToken::Token(TokenType::RParen),
+            TestToken::Token(TokenType::LBrace),
+            TestToken::Ident("x".into()),
+            TestToken::Token(TokenType::Plus),
+            TestToken::Ident("y".into()),
+            TestToken::Token(TokenType::Semicolon),
+            TestToken::Token(TokenType::RBrace),
+            TestToken::Token(TokenType::Semicolon),
+            //
+            TestToken::Token(TokenType::Let),
+            TestToken::Ident("result".into()),
+            TestToken::Token(TokenType::Assign),
+            TestToken::Ident("add".into()),
+            TestToken::Token(TokenType::LParen),
+            TestToken::Ident("five".into()),
+            TestToken::Token(TokenType::Comma),
+            TestToken::Ident("ten".into()),
+            TestToken::Token(TokenType::RParen),
+            TestToken::Token(TokenType::Semicolon),
         ];
 
         let mut lexer = Lexer::new(input.into());
 
         for (i, e) in expected.into_iter().enumerate() {
-            assert_eq!(e, lexer.next().ty, "Invalid token at index {}", i);
+            assert_eq!(e, lexer.next(), "Invalid token at index {}", i);
         }
     }
 }

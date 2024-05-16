@@ -65,7 +65,7 @@ impl Display for TokenType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenLiteral {
     Ident(String),
     Num(i64),
