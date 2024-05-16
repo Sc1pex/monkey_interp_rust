@@ -50,6 +50,27 @@ return 993322; "#
 }
 
 #[test]
+fn ident_expr() {
+    let input = "foobar;".into();
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+
+    let Program { statements } = parser.parse().unwrap();
+
+    assert_eq!(1, statements.len());
+    let expr = match statements[0] {
+        Statement::Expression(ref e) => e,
+        _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+    };
+
+    match &expr.expr {
+        Expression::Ident(i) => assert_eq!(i, "foobar"),
+        e => panic!("expected Ident expression, got {:?}", e),
+    }
+}
+
+#[test]
 fn ast_to_string() {
     let ast = Program {
         statements: vec![

@@ -45,8 +45,18 @@ impl Parser {
         match self.cur_token.ty {
             TokenType::Let => self.parse_let(),
             TokenType::Return => self.parse_return(),
-            _ => Err(vec![ParseErrorKind::UnexpectedToken]),
+            _ => self.parse_expr_stmt(),
         }
+    }
+
+    fn parse_expr_stmt(&mut self) -> ParseResult<Statement> {
+        let expr = self.parse_expr(Precedence::Lowest)?;
+
+        if self.peek_token_is(TokenType::Semicolon) {
+            self.next();
+        }
+
+        Ok(Statement::Expression(ExpressionStmt { expr }))
     }
 
     fn parse_return(&mut self) -> ParseResult<Statement> {
@@ -79,6 +89,17 @@ impl Parser {
         }))
     }
 
+    fn parse_expr(&mut self, prec: Precedence) -> ParseResult<Expression> {
+        self.parse_prefix()
+    }
+
+    fn parse_prefix(&mut self) -> ParseResult<Expression> {
+        match self.cur_token.ty {
+            TokenType::Ident => self.parse_ident(),
+            _ => Err(vec![ParseErrorKind::UnknownPrefixExpr]),
+        }
+    }
+
     fn next(&mut self) {
         self.cur_token = self.peek_token.clone();
         self.peek_token = self.lexer.next();
@@ -101,10 +122,29 @@ impl Parser {
     }
 }
 
+impl Parser {
+    fn parse_ident(&mut self) -> ParseResult<Expression> {
+        let ident = self.cur_token.literal.ident().unwrap();
+        Ok(Expression::Ident(ident.into()))
+    }
+}
+
 type ParseError = Vec<ParseErrorKind>;
 type ParseResult<T> = Result<T, ParseError>;
 
 #[derive(Debug)]
 pub enum ParseErrorKind {
     UnexpectedToken,
+    UnknownPrefixExpr,
+}
+
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+pub enum Precedence {
+    Lowest,
+    Equals,
+    Ltgt,
+    Sum,
+    Prodcut,
+    Prefix,
+    Call,
 }
