@@ -41,18 +41,30 @@ impl Token {
 pub enum TokenType {
     Let,
     Fn,
+    If,
+    Else,
+    Return,
+    True,
+    False,
 
     Ident,
     Number,
 
     Assign,
+    Bang,
     Plus,
+    Minus,
+    Slash,
+    Star,
     Comma,
     Semicolon,
     LParen,
     RParen,
     LBrace,
     RBrace,
+
+    Lt,
+    Gt,
 
     Illegal,
     Eof,

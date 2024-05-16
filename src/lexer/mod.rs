@@ -26,13 +26,19 @@ impl Lexer {
 
         let token = match self.ch {
             '=' => Token::new(TokenType::Assign, None),
+            '!' => Token::new(TokenType::Bang, None),
             '+' => Token::new(TokenType::Plus, None),
+            '-' => Token::new(TokenType::Minus, None),
+            '/' => Token::new(TokenType::Slash, None),
+            '*' => Token::new(TokenType::Star, None),
             '(' => Token::new(TokenType::LParen, None),
             ')' => Token::new(TokenType::RParen, None),
             '{' => Token::new(TokenType::LBrace, None),
             '}' => Token::new(TokenType::RBrace, None),
             ',' => Token::new(TokenType::Comma, None),
             ';' => Token::new(TokenType::Semicolon, None),
+            '<' => Token::new(TokenType::Lt, None),
+            '>' => Token::new(TokenType::Gt, None),
             '\0' => Token::new(TokenType::Eof, None),
 
             ch if is_ident_char(ch, true) => return self.read_ident(),
@@ -97,6 +103,11 @@ fn keyword_or_ident(s: String) -> Token {
     match s.as_str() {
         "let" => Token::new(TokenType::Let, None),
         "fn" => Token::new(TokenType::Fn, None),
+        "if" => Token::new(TokenType::If, None),
+        "else" => Token::new(TokenType::Else, None),
+        "return" => Token::new(TokenType::Return, None),
+        "true" => Token::new(TokenType::True, None),
+        "false" => Token::new(TokenType::False, None),
         _ => Token::new(TokenType::Ident, Some(s)),
     }
 }
@@ -137,6 +148,14 @@ let add = fn(x, y) {
 };
 
 let result = add(five, ten);
+!-/*5;
+5 < 10 > 5;
+
+if (5 < 10) {
+    return true;
+} else {
+    return false;
+}
         "#;
 
         let expected = vec![
@@ -179,6 +198,37 @@ let result = add(five, ten);
             TestToken::Ident("ten".into()),
             TestToken::Token(TokenType::RParen),
             TestToken::Token(TokenType::Semicolon),
+            //
+            TestToken::Token(TokenType::Bang),
+            TestToken::Token(TokenType::Minus),
+            TestToken::Token(TokenType::Slash),
+            TestToken::Token(TokenType::Star),
+            TestToken::Number(5),
+            TestToken::Token(TokenType::Semicolon),
+            TestToken::Number(5),
+            TestToken::Token(TokenType::Lt),
+            TestToken::Number(10),
+            TestToken::Token(TokenType::Gt),
+            TestToken::Number(5),
+            TestToken::Token(TokenType::Semicolon),
+            //
+            TestToken::Token(TokenType::If),
+            TestToken::Token(TokenType::LParen),
+            TestToken::Number(5),
+            TestToken::Token(TokenType::Lt),
+            TestToken::Number(10),
+            TestToken::Token(TokenType::RParen),
+            TestToken::Token(TokenType::LBrace),
+            TestToken::Token(TokenType::Return),
+            TestToken::Token(TokenType::True),
+            TestToken::Token(TokenType::Semicolon),
+            TestToken::Token(TokenType::RBrace),
+            TestToken::Token(TokenType::Else),
+            TestToken::Token(TokenType::LBrace),
+            TestToken::Token(TokenType::Return),
+            TestToken::Token(TokenType::False),
+            TestToken::Token(TokenType::Semicolon),
+            TestToken::Token(TokenType::RBrace),
         ];
 
         let mut lexer = Lexer::new(input.into());
