@@ -25,8 +25,22 @@ impl Lexer {
         self.skip_whitespace();
 
         let token = match self.ch {
-            '=' => Token::new(TokenType::Assign, None),
-            '!' => Token::new(TokenType::Bang, None),
+            '=' => {
+                if self.peek() == '=' {
+                    self.read();
+                    Token::new(TokenType::Eq, None)
+                } else {
+                    Token::new(TokenType::Assign, None)
+                }
+            }
+            '!' => {
+                if self.peek() == '=' {
+                    self.read();
+                    Token::new(TokenType::NotEq, None)
+                } else {
+                    Token::new(TokenType::Bang, None)
+                }
+            }
             '+' => Token::new(TokenType::Plus, None),
             '-' => Token::new(TokenType::Minus, None),
             '/' => Token::new(TokenType::Slash, None),
@@ -87,6 +101,14 @@ impl Lexer {
     fn skip_whitespace(&mut self) {
         while self.ch.is_whitespace() {
             self.read();
+        }
+    }
+
+    fn peek(&self) -> char {
+        if self.read_pos >= self.input.len() {
+            '\0'
+        } else {
+            self.input[self.read_pos]
         }
     }
 }
@@ -156,6 +178,9 @@ if (5 < 10) {
 } else {
     return false;
 }
+
+10 == 10;
+10 != 9;
         "#;
 
         let expected = vec![
@@ -229,6 +254,16 @@ if (5 < 10) {
             TestToken::Token(TokenType::False),
             TestToken::Token(TokenType::Semicolon),
             TestToken::Token(TokenType::RBrace),
+            //
+            TestToken::Number(10),
+            TestToken::Token(TokenType::Eq),
+            TestToken::Number(10),
+            TestToken::Token(TokenType::Semicolon),
+            TestToken::Number(10),
+            TestToken::Token(TokenType::NotEq),
+            TestToken::Number(9),
+            TestToken::Token(TokenType::Semicolon),
+            TestToken::Token(TokenType::Eof),
         ];
 
         let mut lexer = Lexer::new(input.into());

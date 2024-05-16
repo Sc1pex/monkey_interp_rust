@@ -65,6 +65,8 @@ pub enum TokenType {
 
     Lt,
     Gt,
+    Eq,
+    NotEq,
 
     Illegal,
     Eof,
