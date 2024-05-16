@@ -130,6 +130,94 @@ fn prefix_expr() {
 }
 
 #[test]
+fn infix_expr() {
+    let inputs = vec![
+        (
+            "5 + 5",
+            InfixExpr {
+                left: Box::new(Expression::Number(5)),
+                operator: TokenType::Plus,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+        (
+            "5 - 5",
+            InfixExpr {
+                left: Box::new(Expression::Number(5)),
+                operator: TokenType::Minus,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+        (
+            "5 * 5",
+            InfixExpr {
+                left: Box::new(Expression::Number(5)),
+                operator: TokenType::Star,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+        (
+            "5 / 5",
+            InfixExpr {
+                left: Box::new(Expression::Number(5)),
+                operator: TokenType::Slash,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+        (
+            "5 > 5",
+            InfixExpr {
+                left: Box::new(Expression::Number(5)),
+                operator: TokenType::Gt,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+        (
+            "5 < 5",
+            InfixExpr {
+                left: Box::new(Expression::Number(5)),
+                operator: TokenType::Lt,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+        (
+            "5 == 5",
+            InfixExpr {
+                left: Box::new(Expression::Number(5)),
+                operator: TokenType::Eq,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+        (
+            "5 != 5",
+            InfixExpr {
+                left: Box::new(Expression::Number(5)),
+                operator: TokenType::NotEq,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+    ];
+
+    for (inp, expect) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let Program { statements } = parser.parse().unwrap();
+
+        assert_eq!(1, statements.len());
+        let expr = match statements[0] {
+            Statement::Expression(ref e) => e,
+            _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+        };
+
+        match &expr.expr {
+            Expression::Infix(p) => assert_eq!(p, &expect),
+            e => panic!("expected Ident expression, got {:?}", e),
+        }
+    }
+}
+
+#[test]
 fn ast_to_string() {
     let ast = Program {
         statements: vec![

@@ -90,7 +90,20 @@ impl Parser {
     }
 
     fn parse_expr(&mut self, prec: Precedence) -> ParseResult<Expression> {
-        self.prefix()
+        let mut left = self.prefix().map_err(|e| {
+            println!("!!!! PREFIX CALL FOR TOKEN {} !!!!", self.cur_token.ty);
+            e
+        })?;
+        while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
+            if !is_infix_op(self.peek_token.ty) {
+                return Ok(left);
+            }
+
+            self.next();
+            left = self.parse_infix(left)?;
+        }
+
+        Ok(left)
     }
 
     fn prefix(&mut self) -> ParseResult<Expression> {
@@ -112,6 +125,13 @@ impl Parser {
     }
     fn peek_token_is(&self, ty: TokenType) -> bool {
         self.peek_token.ty == ty
+    }
+
+    fn cur_precedence(&self) -> Precedence {
+        token_precedence(self.cur_token.ty)
+    }
+    fn peek_precedence(&self) -> Precedence {
+        token_precedence(self.peek_token.ty)
     }
 
     fn expect_peek(&mut self, ty: TokenType) -> ParseResult<()> {
@@ -153,6 +173,19 @@ impl Parser {
             right: Box::new(expr),
         }))
     }
+
+    fn parse_infix(&mut self, left: Expression) -> ParseResult<Expression> {
+        let operator = self.cur_token.ty;
+        let prec = self.cur_precedence();
+        self.next();
+        let right = Box::new(self.parse_expr(prec)?);
+
+        Ok(Expression::Infix(InfixExpr {
+            left: Box::new(left),
+            operator,
+            right,
+        }))
+    }
 }
 
 type ParseError = Vec<ParseErrorKind>;
@@ -174,4 +207,28 @@ pub enum Precedence {
     Prodcut,
     Prefix,
     Call,
+}
+
+fn token_precedence(ty: TokenType) -> Precedence {
+    match ty {
+        TokenType::Eq | TokenType::NotEq => Precedence::Equals,
+        TokenType::Lt | TokenType::Gt => Precedence::Ltgt,
+        TokenType::Plus | TokenType::Minus => Precedence::Sum,
+        TokenType::Star | TokenType::Slash => Precedence::Prodcut,
+        _ => Precedence::Lowest,
+    }
+}
+
+fn is_infix_op(ty: TokenType) -> bool {
+    matches!(
+        ty,
+        TokenType::Plus
+            | TokenType::Minus
+            | TokenType::Slash
+            | TokenType::Star
+            | TokenType::Eq
+            | TokenType::NotEq
+            | TokenType::Lt
+            | TokenType::Gt
+    )
 }

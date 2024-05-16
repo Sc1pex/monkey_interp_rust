@@ -73,6 +73,7 @@ enum Expression {
     Ident(Ident),
     Number(i64),
     Prefix(PrefixExpr),
+    Infix(InfixExpr),
     Todo,
 }
 
@@ -82,6 +83,7 @@ impl Display for Expression {
             Expression::Ident(i) => write!(f, "{}", i),
             Expression::Number(x) => write!(f, "{}", x),
             Expression::Prefix(p) => write!(f, "{}", p),
+            Expression::Infix(p) => write!(f, "{}", p),
             Expression::Todo => write!(f, "TODO"),
         }
     }
@@ -96,6 +98,19 @@ struct PrefixExpr {
 impl Display for PrefixExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}{})", self.operator, self.right)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct InfixExpr {
+    left: Box<Expression>,
+    operator: TokenType,
+    right: Box<Expression>,
+}
+
+impl Display for InfixExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({} {} {})", self.left, self.operator, self.right)
     }
 }
 
