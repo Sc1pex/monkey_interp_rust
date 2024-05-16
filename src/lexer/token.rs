@@ -74,8 +74,39 @@ pub enum TokenType {
 
 impl Display for TokenType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = format!("{:?}", self);
-        write!(f, "{}", s.to_lowercase())
+        write!(
+            f,
+            "{}",
+            match self {
+                TokenType::Let => "let",
+                TokenType::Fn => "fn",
+                TokenType::If => "if",
+                TokenType::Else => "else",
+                TokenType::Return => "return",
+                TokenType::True => "true",
+                TokenType::False => "false",
+                TokenType::Ident => "ident",
+                TokenType::Number => "number",
+                TokenType::Assign => "=",
+                TokenType::Bang => "!",
+                TokenType::Plus => "+",
+                TokenType::Minus => "-",
+                TokenType::Slash => "/",
+                TokenType::Star => "*",
+                TokenType::Comma => ",",
+                TokenType::Semicolon => ";",
+                TokenType::LParen => "(",
+                TokenType::RParen => ")",
+                TokenType::LBrace => "{",
+                TokenType::RBrace => "}",
+                TokenType::Lt => "<",
+                TokenType::Gt => ">",
+                TokenType::Eq => "==",
+                TokenType::NotEq => "!=",
+                TokenType::Illegal => "illegal",
+                TokenType::Eof => "eof",
+            }
+        )
     }
 }
 
