@@ -92,6 +92,44 @@ fn number_expr() {
 }
 
 #[test]
+fn prefix_expr() {
+    let inputs = vec![
+        (
+            "!5",
+            PrefixExpr {
+                operator: TokenType::Bang,
+                right: Box::new(Expression::Number(5)),
+            },
+        ),
+        (
+            "-abc",
+            PrefixExpr {
+                operator: TokenType::Minus,
+                right: Box::new(Expression::Ident("abc".into())),
+            },
+        ),
+    ];
+
+    for (inp, expect) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let Program { statements } = parser.parse().unwrap();
+
+        assert_eq!(1, statements.len());
+        let expr = match statements[0] {
+            Statement::Expression(ref e) => e,
+            _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+        };
+
+        match &expr.expr {
+            Expression::Prefix(p) => assert_eq!(p, &expect),
+            e => panic!("expected Ident expression, got {:?}", e),
+        }
+    }
+}
+
+#[test]
 fn ast_to_string() {
     let ast = Program {
         statements: vec![

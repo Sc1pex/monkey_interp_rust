@@ -90,13 +90,14 @@ impl Parser {
     }
 
     fn parse_expr(&mut self, prec: Precedence) -> ParseResult<Expression> {
-        self.parse_prefix()
+        self.prefix()
     }
 
-    fn parse_prefix(&mut self) -> ParseResult<Expression> {
+    fn prefix(&mut self) -> ParseResult<Expression> {
         match self.cur_token.ty {
             TokenType::Ident => self.parse_ident(),
             TokenType::Number => self.parse_number(),
+            TokenType::Bang | TokenType::Minus => self.parse_prefix(),
             _ => Err(vec![ParseErrorKind::UnknownPrefixExpr]),
         }
     }
@@ -140,6 +141,17 @@ impl Parser {
             .num()
             .ok_or(vec![ParseErrorKind::InvalidParseFn])?;
         Ok(Expression::Number(num))
+    }
+
+    fn parse_prefix(&mut self) -> ParseResult<Expression> {
+        let operator = self.cur_token.ty;
+        self.next();
+        let expr = self.parse_expr(Precedence::Prefix)?;
+
+        Ok(Expression::Prefix(PrefixExpr {
+            operator,
+            right: Box::new(expr),
+        }))
     }
 }
 
