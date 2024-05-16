@@ -70,6 +70,7 @@ impl Display for ExpressionStmt {
 #[derive(Debug)]
 enum Expression {
     Ident(Ident),
+    Number(i64),
     Todo,
 }
 
@@ -77,6 +78,7 @@ impl Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Expression::Ident(i) => write!(f, "{}", i),
+            Expression::Number(x) => write!(f, "{}", x),
             Expression::Todo => write!(f, "TODO"),
         }
     }

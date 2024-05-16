@@ -71,6 +71,27 @@ fn ident_expr() {
 }
 
 #[test]
+fn number_expr() {
+    let input = "69420;".into();
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+
+    let Program { statements } = parser.parse().unwrap();
+
+    assert_eq!(1, statements.len());
+    let expr = match statements[0] {
+        Statement::Expression(ref e) => e,
+        _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+    };
+
+    match &expr.expr {
+        Expression::Number(x) => assert_eq!(*x, 69420),
+        e => panic!("expected Ident expression, got {:?}", e),
+    }
+}
+
+#[test]
 fn ast_to_string() {
     let ast = Program {
         statements: vec![

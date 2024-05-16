@@ -96,6 +96,7 @@ impl Parser {
     fn parse_prefix(&mut self) -> ParseResult<Expression> {
         match self.cur_token.ty {
             TokenType::Ident => self.parse_ident(),
+            TokenType::Number => self.parse_number(),
             _ => Err(vec![ParseErrorKind::UnknownPrefixExpr]),
         }
     }
@@ -124,8 +125,21 @@ impl Parser {
 
 impl Parser {
     fn parse_ident(&mut self) -> ParseResult<Expression> {
-        let ident = self.cur_token.literal.ident().unwrap();
+        let ident = self
+            .cur_token
+            .literal
+            .ident()
+            .ok_or(vec![ParseErrorKind::InvalidParseFn])?;
         Ok(Expression::Ident(ident.into()))
+    }
+
+    fn parse_number(&mut self) -> ParseResult<Expression> {
+        let num = self
+            .cur_token
+            .literal
+            .num()
+            .ok_or(vec![ParseErrorKind::InvalidParseFn])?;
+        Ok(Expression::Number(num))
     }
 }
 
@@ -136,6 +150,7 @@ type ParseResult<T> = Result<T, ParseError>;
 pub enum ParseErrorKind {
     UnexpectedToken,
     UnknownPrefixExpr,
+    InvalidParseFn,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
