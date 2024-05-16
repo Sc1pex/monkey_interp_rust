@@ -29,3 +29,22 @@ fn check_let_stmt(exp: &str, stmt: Statement) {
         _ => panic!("Expected let statement, found {:?}", stmt),
     }
 }
+
+#[test]
+fn return_stmt() {
+    let input = r#"
+return 5;
+return 10;
+return 993322; "#
+        .into();
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+
+    let Program { statements } = parser.parse().unwrap();
+
+    assert_eq!(3, statements.len());
+    for stmt in statements {
+        assert!(matches!(stmt, Statement::Return(..)));
+    }
+}

@@ -44,8 +44,22 @@ impl Parser {
     fn parse_stmt(&mut self) -> ParseResult<Statement> {
         match self.cur_token.ty {
             TokenType::Let => self.parse_let(),
+            TokenType::Return => self.parse_return(),
             _ => Err(vec![ParseErrorKind::UnexpectedToken]),
         }
+    }
+
+    fn parse_return(&mut self) -> ParseResult<Statement> {
+        self.next(); // Skip 'Return' token
+
+        // TODO: Parse expression
+        while !self.cur_token_is(TokenType::Semicolon) {
+            self.next();
+        }
+
+        Ok(Statement::Return(ReturnStmt {
+            expr: Expression::Todo,
+        }))
     }
 
     fn parse_let(&mut self) -> ParseResult<Statement> {

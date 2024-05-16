@@ -10,18 +10,24 @@ pub struct Program {
 #[derive(Debug)]
 enum Statement {
     Let(LetStmt),
-}
-
-#[derive(Debug)]
-enum Expression {
-    Ident(Ident),
-    Todo,
+    Return(ReturnStmt),
 }
 
 #[derive(Debug)]
 struct LetStmt {
     ident: Ident,
     expr: Expression,
+}
+
+#[derive(Debug)]
+struct ReturnStmt {
+    expr: Expression,
+}
+
+#[derive(Debug)]
+enum Expression {
+    Ident(Ident),
+    Todo,
 }
 
 #[cfg(test)]
