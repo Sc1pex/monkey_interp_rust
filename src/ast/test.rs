@@ -48,3 +48,23 @@ return 993322; "#
         assert!(matches!(stmt, Statement::Return(..)));
     }
 }
+
+#[test]
+fn ast_to_string() {
+    let ast = Program {
+        statements: vec![
+            Statement::Let(LetStmt {
+                ident: "myVar".into(),
+                expr: Expression::Ident("anotherVar".into()),
+            }),
+            Statement::Return(ReturnStmt {
+                expr: Expression::Ident("y".into()),
+            }),
+        ],
+    };
+
+    let expected = r#"let myVar = anotherVar;
+return y;
+"#;
+    assert_eq!(ast.to_string(), expected);
+}
