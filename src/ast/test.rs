@@ -218,6 +218,35 @@ fn infix_expr() {
 }
 
 #[test]
+fn operator_precedence() {
+    let inputs = [
+        ("-a * b", "((-a) * b)\n"),
+        ("!-a", "(!(-a))\n"),
+        ("a + b + c", "((a + b) + c)\n"),
+        ("a + b - c", "((a + b) - c)\n"),
+        ("a * b * c", "((a * b) * c)\n"),
+        ("a * b / c", "((a * b) / c)\n"),
+        ("a + b / c", "(a + (b / c))\n"),
+        ("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)\n"),
+        ("3 + 4; -5 * 5", "(3 + 4)\n((-5) * 5)\n"),
+        ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))\n"),
+        ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))\n"),
+        (
+            "3 + 4 * 5 == 3 * 1 + 4 * 5",
+            "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))\n",
+        ),
+    ];
+
+    for (inp, exp) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse().unwrap();
+        assert_eq!(program.to_string(), exp);
+    }
+}
+
+#[test]
 fn ast_to_string() {
     let ast = Program {
         statements: vec![
