@@ -218,6 +218,28 @@ fn infix_expr() {
 }
 
 #[test]
+fn bool_expr() {
+    let inputs = [
+        ("true;", Expression::Bool(true)),
+        ("false;", Expression::Bool(false)),
+    ];
+
+    for (inp, expect) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let Program { statements } = parser.parse().unwrap();
+
+        assert_eq!(1, statements.len());
+        let expr = match statements[0] {
+            Statement::Expression(ref e) => &e.expr,
+            _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+        };
+        assert_eq!(expr, &expect);
+    }
+}
+
+#[test]
 fn operator_precedence() {
     let inputs = [
         ("-a * b", "((-a) * b)\n"),
@@ -235,6 +257,11 @@ fn operator_precedence() {
             "3 + 4 * 5 == 3 * 1 + 4 * 5",
             "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))\n",
         ),
+        ("1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)\n"),
+        ("(5 + 5) * 2", "((5 + 5) * 2)\n"),
+        ("2 / (5 + 5)", "(2 / (5 + 5))\n"),
+        ("-(5 + 5)", "(-(5 + 5))\n"),
+        ("!(true == true)", "(!(true == true))\n"),
     ];
 
     for (inp, exp) in inputs {

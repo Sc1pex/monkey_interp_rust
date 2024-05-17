@@ -74,6 +74,7 @@ enum Expression {
     Number(i64),
     Prefix(PrefixExpr),
     Infix(InfixExpr),
+    Bool(bool),
     Todo,
 }
 
@@ -84,6 +85,7 @@ impl Display for Expression {
             Expression::Number(x) => write!(f, "{}", x),
             Expression::Prefix(p) => write!(f, "{}", p),
             Expression::Infix(p) => write!(f, "{}", p),
+            Expression::Bool(b) => write!(f, "{}", b),
             Expression::Todo => write!(f, "TODO"),
         }
     }

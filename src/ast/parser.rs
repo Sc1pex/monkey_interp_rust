@@ -90,10 +90,7 @@ impl Parser {
     }
 
     fn parse_expr(&mut self, prec: Precedence) -> ParseResult<Expression> {
-        let mut left = self.prefix().map_err(|e| {
-            println!("!!!! PREFIX CALL FOR TOKEN {} !!!!", self.cur_token.ty);
-            e
-        })?;
+        let mut left = self.prefix()?;
         while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
             if !is_infix_op(self.peek_token.ty) {
                 return Ok(left);
@@ -110,7 +107,9 @@ impl Parser {
         match self.cur_token.ty {
             TokenType::Ident => self.parse_ident(),
             TokenType::Number => self.parse_number(),
+            TokenType::True | TokenType::False => self.parse_bool(),
             TokenType::Bang | TokenType::Minus => self.parse_prefix(),
+            TokenType::LParen => self.parse_group(),
             _ => Err(vec![ParseErrorKind::UnknownPrefixExpr]),
         }
     }
@@ -163,6 +162,14 @@ impl Parser {
         Ok(Expression::Number(num))
     }
 
+    fn parse_bool(&mut self) -> ParseResult<Expression> {
+        match self.cur_token.ty {
+            TokenType::True => Ok(Expression::Bool(true)),
+            TokenType::False => Ok(Expression::Bool(false)),
+            _ => Err(vec![ParseErrorKind::InvalidParseFn]),
+        }
+    }
+
     fn parse_prefix(&mut self) -> ParseResult<Expression> {
         let operator = self.cur_token.ty;
         self.next();
@@ -185,6 +192,14 @@ impl Parser {
             operator,
             right,
         }))
+    }
+
+    fn parse_group(&mut self) -> ParseResult<Expression> {
+        self.next();
+
+        let exp = self.parse_expr(Precedence::Lowest)?;
+        self.expect_peek(TokenType::RParen)?;
+        Ok(exp)
     }
 }
 
