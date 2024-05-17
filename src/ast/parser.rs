@@ -110,7 +110,8 @@ impl Parser {
             TokenType::True | TokenType::False => self.parse_bool(),
             TokenType::Bang | TokenType::Minus => self.parse_prefix(),
             TokenType::LParen => self.parse_group(),
-            _ => Err(vec![ParseErrorKind::UnknownPrefixExpr]),
+            TokenType::If => self.parse_if(),
+            _ => Err(vec![ParseErrorKind::UnknownPrefixExpr(self.cur_token.ty)]),
         }
     }
 
@@ -194,6 +195,49 @@ impl Parser {
         }))
     }
 
+    fn parse_if(&mut self) -> ParseResult<Expression> {
+        self.expect_peek(TokenType::LParen)?;
+        self.next();
+        let condition = self.parse_expr(Precedence::Lowest)?;
+        self.expect_peek(TokenType::RParen)?;
+        self.expect_peek(TokenType::LBrace)?;
+        self.next();
+
+        let if_branch = self.parse_block()?;
+
+        if self.peek_token_is(TokenType::Else) {
+            self.next();
+            self.expect_peek(TokenType::LBrace)?;
+            self.next();
+
+            let else_branch = self.parse_block()?;
+
+            Ok(Expression::If(IfExpr {
+                condition: Box::new(condition),
+                if_branch,
+                else_branch: Some(else_branch),
+            }))
+        } else {
+            Ok(Expression::If(IfExpr {
+                condition: Box::new(condition),
+                if_branch,
+                else_branch: None,
+            }))
+        }
+    }
+
+    fn parse_block(&mut self) -> ParseResult<Vec<Statement>> {
+        let mut statements = vec![];
+
+        while !self.cur_token_is(TokenType::RBrace) && !self.cur_token_is(TokenType::Eof) {
+            let s = self.parse_stmt()?;
+            statements.push(s);
+            self.next();
+        }
+
+        Ok(statements)
+    }
+
     fn parse_group(&mut self) -> ParseResult<Expression> {
         self.next();
 
@@ -209,7 +253,7 @@ type ParseResult<T> = Result<T, ParseError>;
 #[derive(Debug)]
 pub enum ParseErrorKind {
     UnexpectedToken,
-    UnknownPrefixExpr,
+    UnknownPrefixExpr(TokenType),
     InvalidParseFn,
 }
 

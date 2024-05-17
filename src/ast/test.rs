@@ -240,6 +240,60 @@ fn bool_expr() {
 }
 
 #[test]
+fn if_else_expr() {
+    let inputs = [
+        (
+            "if (x < y) { x }",
+            IfExpr {
+                condition: Box::new(Expression::Infix(InfixExpr {
+                    left: Box::new(Expression::Ident("x".into())),
+                    operator: TokenType::Lt,
+                    right: Box::new(Expression::Ident("y".into())),
+                })),
+                if_branch: vec![Statement::Expression(ExpressionStmt {
+                    expr: Expression::Ident("x".into()),
+                })],
+                else_branch: None,
+            },
+        ),
+        (
+            "if (x < y) { x } else { y }",
+            IfExpr {
+                condition: Box::new(Expression::Infix(InfixExpr {
+                    left: Box::new(Expression::Ident("x".into())),
+                    operator: TokenType::Lt,
+                    right: Box::new(Expression::Ident("y".into())),
+                })),
+                if_branch: vec![Statement::Expression(ExpressionStmt {
+                    expr: Expression::Ident("x".into()),
+                })],
+                else_branch: Some(vec![Statement::Expression(ExpressionStmt {
+                    expr: Expression::Ident("y".into()),
+                })]),
+            },
+        ),
+    ];
+
+    for (inp, expect) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let Program { statements } = parser.parse().unwrap();
+
+        assert_eq!(1, statements.len());
+        let expr = match statements[0] {
+            Statement::Expression(ref e) => &e.expr,
+            _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+        };
+
+        match &expr {
+            Expression::If(i) => assert_eq!(i, &expect),
+            e => panic!("expected Ident expression, got {:?}", e),
+        }
+    }
+}
+
+#[test]
 fn operator_precedence() {
     let inputs = [
         ("-a * b", "((-a) * b)\n"),

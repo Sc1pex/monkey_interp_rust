@@ -21,7 +21,7 @@ impl Display for Program {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Statement {
     Let(LetStmt),
     Return(ReturnStmt),
@@ -38,16 +38,16 @@ impl Display for Statement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct LetStmt {
     ident: Ident,
     expr: Expression,
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct ReturnStmt {
     expr: Expression,
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct ExpressionStmt {
     expr: Expression,
 }
@@ -75,6 +75,7 @@ enum Expression {
     Prefix(PrefixExpr),
     Infix(InfixExpr),
     Bool(bool),
+    If(IfExpr),
     Todo,
 }
 
@@ -86,6 +87,7 @@ impl Display for Expression {
             Expression::Prefix(p) => write!(f, "{}", p),
             Expression::Infix(p) => write!(f, "{}", p),
             Expression::Bool(b) => write!(f, "{}", b),
+            Expression::If(i) => write!(f, "{}", i),
             Expression::Todo => write!(f, "TODO"),
         }
     }
@@ -113,6 +115,32 @@ struct InfixExpr {
 impl Display for InfixExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({} {} {})", self.left, self.operator, self.right)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct IfExpr {
+    condition: Box<Expression>,
+    if_branch: Vec<Statement>,
+    else_branch: Option<Vec<Statement>>,
+}
+
+impl Display for IfExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "if ({}) {{", self.condition)?;
+        for s in &self.if_branch {
+            writeln!(f, "  {}", s)?;
+        }
+        write!(f, "}}")?;
+        if let Some(else_branch) = &self.else_branch {
+            writeln!(f, " else {{")?;
+            for s in else_branch {
+                writeln!(f, "  {}", s)?;
+            }
+            write!(f, "}}")?;
+        }
+
+        Ok(())
     }
 }
 
