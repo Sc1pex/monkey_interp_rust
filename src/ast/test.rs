@@ -87,7 +87,7 @@ fn number_expr() {
 
     match &expr.expr {
         Expression::Number(x) => assert_eq!(*x, 69420),
-        e => panic!("expected Ident expression, got {:?}", e),
+        e => panic!("expected Number expression, got {:?}", e),
     }
 }
 
@@ -124,7 +124,7 @@ fn prefix_expr() {
 
         match &expr.expr {
             Expression::Prefix(p) => assert_eq!(p, &expect),
-            e => panic!("expected Ident expression, got {:?}", e),
+            e => panic!("expected Prefix expression, got {:?}", e),
         }
     }
 }
@@ -212,7 +212,7 @@ fn infix_expr() {
 
         match &expr.expr {
             Expression::Infix(p) => assert_eq!(p, &expect),
-            e => panic!("expected Ident expression, got {:?}", e),
+            e => panic!("expected Infix expression, got {:?}", e),
         }
     }
 }
@@ -288,7 +288,7 @@ fn if_else_expr() {
 
         match &expr {
             Expression::If(i) => assert_eq!(i, &expect),
-            e => panic!("expected Ident expression, got {:?}", e),
+            e => panic!("expected If expression, got {:?}", e),
         }
     }
 }
