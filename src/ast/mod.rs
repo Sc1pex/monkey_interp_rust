@@ -78,7 +78,6 @@ enum Expression {
     If(IfExpr),
     Func(FuncExpr),
     Call(CallExpr),
-    Todo,
 }
 
 impl Display for Expression {
@@ -92,7 +91,6 @@ impl Display for Expression {
             Expression::If(i) => write!(f, "{}", i),
             Expression::Func(i) => write!(f, "{}", i),
             Expression::Call(i) => write!(f, "{}", i),
-            Expression::Todo => write!(f, "TODO"),
         }
     }
 }

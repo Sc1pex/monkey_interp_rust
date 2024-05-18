@@ -62,14 +62,12 @@ impl Parser {
     fn parse_return(&mut self) -> ParseResult<Statement> {
         self.next(); // Skip 'Return' token
 
-        // TODO: Parse expression
-        while !self.cur_token_is(TokenType::Semicolon) {
+        let expr = self.parse_expr(Precedence::Lowest)?;
+        if self.peek_token_is(TokenType::Semicolon) {
             self.next();
         }
 
-        Ok(Statement::Return(ReturnStmt {
-            expr: Expression::Todo,
-        }))
+        Ok(Statement::Return(ReturnStmt { expr }))
     }
 
     fn parse_let(&mut self) -> ParseResult<Statement> {
@@ -77,16 +75,14 @@ impl Parser {
         let ident: String = self.cur_token.literal.ident().unwrap().into();
 
         self.expect_peek(TokenType::Assign)?;
+        self.next();
 
-        // TODO: Parse expression
-        while !self.cur_token_is(TokenType::Semicolon) {
+        let expr = self.parse_expr(Precedence::Lowest)?;
+        if self.peek_token_is(TokenType::Semicolon) {
             self.next();
         }
 
-        Ok(Statement::Let(LetStmt {
-            ident,
-            expr: Expression::Todo,
-        }))
+        Ok(Statement::Let(LetStmt { ident, expr }))
     }
 
     fn parse_expr(&mut self, prec: Precedence) -> ParseResult<Expression> {
