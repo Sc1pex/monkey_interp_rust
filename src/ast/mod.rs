@@ -76,6 +76,7 @@ enum Expression {
     Infix(InfixExpr),
     Bool(bool),
     If(IfExpr),
+    Func(FuncExpr),
     Todo,
 }
 
@@ -88,6 +89,7 @@ impl Display for Expression {
             Expression::Infix(p) => write!(f, "{}", p),
             Expression::Bool(b) => write!(f, "{}", b),
             Expression::If(i) => write!(f, "{}", i),
+            Expression::Func(i) => write!(f, "{}", i),
             Expression::Todo => write!(f, "TODO"),
         }
     }
@@ -139,6 +141,28 @@ impl Display for IfExpr {
             }
             write!(f, "}}")?;
         }
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct FuncExpr {
+    params: Vec<Ident>,
+    body: Vec<Statement>,
+}
+
+impl Display for FuncExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "fn (")?;
+        for p in &self.params {
+            write!(f, "{}", p)?;
+        }
+        writeln!(f, ") {{")?;
+        for s in &self.body {
+            writeln!(f, "  {}", s)?;
+        }
+        write!(f, "}}")?;
 
         Ok(())
     }

@@ -111,6 +111,7 @@ impl Parser {
             TokenType::Bang | TokenType::Minus => self.parse_prefix(),
             TokenType::LParen => self.parse_group(),
             TokenType::If => self.parse_if(),
+            TokenType::Fn => self.parse_func(),
             _ => Err(vec![ParseErrorKind::UnknownPrefixExpr(self.cur_token.ty)]),
         }
     }
@@ -224,6 +225,47 @@ impl Parser {
                 else_branch: None,
             }))
         }
+    }
+
+    fn parse_func(&mut self) -> ParseResult<Expression> {
+        self.expect_peek(TokenType::LParen)?;
+        self.next();
+
+        let params = self.parse_params()?;
+
+        self.expect_peek(TokenType::LBrace)?;
+        self.next();
+        let body = self.parse_block()?;
+
+        Ok(Expression::Func(FuncExpr { params, body }))
+    }
+
+    fn parse_params(&mut self) -> ParseResult<Vec<Ident>> {
+        if self.cur_token_is(TokenType::RParen) {
+            return Ok(vec![]);
+        }
+
+        let mut res: Vec<Ident> = vec![];
+        while self.peek_token_is(TokenType::Comma) {
+            let ident = self
+                .cur_token
+                .literal
+                .ident()
+                .ok_or(vec![ParseErrorKind::UnexpectedToken])?;
+            res.push(ident.into());
+
+            self.expect_peek(TokenType::Comma)?;
+            self.next();
+        }
+        let ident = self
+            .cur_token
+            .literal
+            .ident()
+            .ok_or(vec![ParseErrorKind::UnexpectedToken])?;
+        res.push(ident.into());
+        self.expect_peek(TokenType::RParen)?;
+
+        Ok(res)
     }
 
     fn parse_block(&mut self) -> ParseResult<Vec<Statement>> {

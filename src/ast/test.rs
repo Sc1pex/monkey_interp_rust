@@ -294,6 +294,65 @@ fn if_else_expr() {
 }
 
 #[test]
+fn func_expr() {
+    let input = "fn(x, y) { x * y; }";
+    let expected = FuncExpr {
+        params: vec!["x".into(), "y".into()],
+        body: vec![Statement::Expression(ExpressionStmt {
+            expr: Expression::Infix(InfixExpr {
+                left: Box::new(Expression::Ident("x".into())),
+                operator: TokenType::Star,
+                right: Box::new(Expression::Ident("y".into())),
+            }),
+        })],
+    };
+
+    let lexer = Lexer::new(input.into());
+    let mut parser = Parser::new(lexer);
+
+    let Program { statements } = parser.parse().unwrap();
+
+    assert_eq!(1, statements.len());
+    let expr = match statements[0] {
+        Statement::Expression(ref e) => &e.expr,
+        _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+    };
+    match &expr {
+        Expression::Func(i) => assert_eq!(i, &expected),
+        e => panic!("expected Func expression, got {:?}", e),
+    }
+}
+
+#[test]
+fn func_params() {
+    let inputs = [
+        (
+            "fn(x, y, sum) {}",
+            vec!["x".to_string(), "y".into(), "sum".into()],
+        ),
+        ("fn(x) {}", vec!["x".into()]),
+        ("fn() {}", vec![]),
+    ];
+
+    for (inp, expect) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let Program { statements } = parser.parse().unwrap();
+
+        assert_eq!(1, statements.len());
+        let expr = match statements[0] {
+            Statement::Expression(ref e) => &e.expr,
+            _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+        };
+        match &expr {
+            Expression::Func(i) => assert_eq!(i.params, expect),
+            e => panic!("expected Func expression, got {:?}", e),
+        }
+    }
+}
+
+#[test]
 fn operator_precedence() {
     let inputs = [
         ("-a * b", "((-a) * b)\n"),
