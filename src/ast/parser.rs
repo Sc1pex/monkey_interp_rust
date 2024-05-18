@@ -92,12 +92,24 @@ impl Parser {
     fn parse_expr(&mut self, prec: Precedence) -> ParseResult<Expression> {
         let mut left = self.prefix()?;
         while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
-            if !is_infix_op(self.peek_token.ty) {
-                return Ok(left);
+            match self.peek_token.ty {
+                TokenType::Plus
+                | TokenType::Minus
+                | TokenType::Slash
+                | TokenType::Star
+                | TokenType::Eq
+                | TokenType::NotEq
+                | TokenType::Lt
+                | TokenType::Gt => {
+                    self.next();
+                    left = self.parse_infix(left)?;
+                }
+                TokenType::LParen => {
+                    self.next();
+                    left = self.parse_call(left)?;
+                }
+                _ => return Ok(left),
             }
-
-            self.next();
-            left = self.parse_infix(left)?;
         }
 
         Ok(left)
@@ -140,7 +152,10 @@ impl Parser {
             self.next();
             Ok(())
         } else {
-            Err(vec![ParseErrorKind::UnexpectedToken])
+            Err(vec![ParseErrorKind::UnexpectedToken(UnexpectedErr::new(
+                ty,
+                self.peek_token.ty,
+            ))])
         }
     }
 }
@@ -247,11 +262,14 @@ impl Parser {
 
         let mut res: Vec<Ident> = vec![];
         while self.peek_token_is(TokenType::Comma) {
-            let ident = self
-                .cur_token
-                .literal
-                .ident()
-                .ok_or(vec![ParseErrorKind::UnexpectedToken])?;
+            let ident =
+                self.cur_token
+                    .literal
+                    .ident()
+                    .ok_or(vec![ParseErrorKind::UnexpectedToken(UnexpectedErr::new(
+                        TokenType::Ident,
+                        self.cur_token.ty,
+                    ))])?;
             res.push(ident.into());
 
             self.expect_peek(TokenType::Comma)?;
@@ -261,7 +279,10 @@ impl Parser {
             .cur_token
             .literal
             .ident()
-            .ok_or(vec![ParseErrorKind::UnexpectedToken])?;
+            .ok_or(vec![ParseErrorKind::UnexpectedToken(UnexpectedErr::new(
+                TokenType::Ident,
+                self.cur_token.ty,
+            ))])?;
         res.push(ident.into());
         self.expect_peek(TokenType::RParen)?;
 
@@ -280,6 +301,34 @@ impl Parser {
         Ok(statements)
     }
 
+    fn parse_call(&mut self, func: Expression) -> ParseResult<Expression> {
+        self.next();
+        let args = self.parse_args()?;
+        Ok(Expression::Call(CallExpr {
+            func: Box::new(func),
+            arguments: args,
+        }))
+    }
+
+    fn parse_args(&mut self) -> ParseResult<Vec<Expression>> {
+        if self.cur_token_is(TokenType::RParen) {
+            return Ok(vec![]);
+        }
+
+        let expr = self.parse_expr(Precedence::Lowest)?;
+        let mut res = vec![expr];
+
+        while self.peek_token_is(TokenType::Comma) {
+            self.next();
+            self.next();
+            let expr = self.parse_expr(Precedence::Lowest)?;
+            res.push(expr);
+        }
+        self.next();
+
+        Ok(res)
+    }
+
     fn parse_group(&mut self) -> ParseResult<Expression> {
         self.next();
 
@@ -294,9 +343,21 @@ type ParseResult<T> = Result<T, ParseError>;
 
 #[derive(Debug)]
 pub enum ParseErrorKind {
-    UnexpectedToken,
+    UnexpectedToken(UnexpectedErr),
     UnknownPrefixExpr(TokenType),
     InvalidParseFn,
+}
+
+#[derive(Debug)]
+pub struct UnexpectedErr {
+    expected: TokenType,
+    found: TokenType,
+}
+
+impl UnexpectedErr {
+    pub fn new(expected: TokenType, found: TokenType) -> Self {
+        Self { expected, found }
+    }
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
@@ -316,20 +377,7 @@ fn token_precedence(ty: TokenType) -> Precedence {
         TokenType::Lt | TokenType::Gt => Precedence::Ltgt,
         TokenType::Plus | TokenType::Minus => Precedence::Sum,
         TokenType::Star | TokenType::Slash => Precedence::Prodcut,
+        TokenType::LParen => Precedence::Call,
         _ => Precedence::Lowest,
     }
-}
-
-fn is_infix_op(ty: TokenType) -> bool {
-    matches!(
-        ty,
-        TokenType::Plus
-            | TokenType::Minus
-            | TokenType::Slash
-            | TokenType::Star
-            | TokenType::Eq
-            | TokenType::NotEq
-            | TokenType::Lt
-            | TokenType::Gt
-    )
 }

@@ -77,6 +77,7 @@ enum Expression {
     Bool(bool),
     If(IfExpr),
     Func(FuncExpr),
+    Call(CallExpr),
     Todo,
 }
 
@@ -90,6 +91,7 @@ impl Display for Expression {
             Expression::Bool(b) => write!(f, "{}", b),
             Expression::If(i) => write!(f, "{}", i),
             Expression::Func(i) => write!(f, "{}", i),
+            Expression::Call(i) => write!(f, "{}", i),
             Expression::Todo => write!(f, "TODO"),
         }
     }
@@ -165,6 +167,29 @@ impl Display for FuncExpr {
         write!(f, "}}")?;
 
         Ok(())
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct CallExpr {
+    /// `Expression::Func` or `Expression::Ident`
+    func: Box<Expression>,
+    arguments: Vec<Expression>,
+}
+
+impl Display for CallExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.func)?;
+
+        write!(f, "(")?;
+        for (idx, s) in self.arguments.iter().enumerate() {
+            if idx != self.arguments.len() - 1 {
+                write!(f, "{}, ", s)?;
+            } else {
+                write!(f, "{}", s)?;
+            }
+        }
+        write!(f, ")")
     }
 }
 

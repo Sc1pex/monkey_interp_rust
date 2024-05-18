@@ -353,6 +353,75 @@ fn func_params() {
 }
 
 #[test]
+fn call_expr() {
+    let input = "add(1, 2+3, x*y)";
+    let expected = CallExpr {
+        func: Box::new(Expression::Ident("add".into())),
+        arguments: vec![
+            Expression::Number(1),
+            Expression::Infix(InfixExpr {
+                left: Box::new(Expression::Number(2)),
+                operator: TokenType::Plus,
+                right: Box::new(Expression::Number(3)),
+            }),
+            Expression::Infix(InfixExpr {
+                left: Box::new(Expression::Ident("x".into())),
+                operator: TokenType::Star,
+                right: Box::new(Expression::Ident("y".into())),
+            }),
+        ],
+    };
+
+    let lexer = Lexer::new(input.into());
+    let mut parser = Parser::new(lexer);
+
+    let Program { statements } = parser.parse().unwrap();
+
+    assert_eq!(1, statements.len());
+    let expr = match statements[0] {
+        Statement::Expression(ref e) => &e.expr,
+        _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+    };
+    match &expr {
+        Expression::Call(i) => assert_eq!(i, &expected),
+        e => panic!("expected Call expression, got {:?}", e),
+    }
+}
+
+#[test]
+fn call_expr_arguments() {
+    let inputs = [
+        (
+            "add(x, y, sum)",
+            vec![
+                Expression::Ident("x".into()),
+                Expression::Ident("y".into()),
+                Expression::Ident("sum".into()),
+            ],
+        ),
+        ("add(x)", vec![Expression::Ident("x".into())]),
+        ("add()", vec![]),
+    ];
+
+    for (inp, expect) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let Program { statements } = parser.parse().unwrap();
+
+        assert_eq!(1, statements.len());
+        let expr = match statements[0] {
+            Statement::Expression(ref e) => &e.expr,
+            _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+        };
+        match &expr {
+            Expression::Call(i) => assert_eq!(i.arguments, expect),
+            e => panic!("expected Func expression, got {:?}", e),
+        }
+    }
+}
+
+#[test]
 fn operator_precedence() {
     let inputs = [
         ("-a * b", "((-a) * b)\n"),
@@ -375,6 +444,15 @@ fn operator_precedence() {
         ("2 / (5 + 5)", "(2 / (5 + 5))\n"),
         ("-(5 + 5)", "(-(5 + 5))\n"),
         ("!(true == true)", "(!(true == true))\n"),
+        ("a + add(b * c) + d", "((a + add((b * c))) + d)\n"),
+        (
+            "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+            "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))\n",
+        ),
+        (
+            "add(a + b + c * d / f + g)",
+            "add((((a + b) + ((c * d) / f)) + g))\n",
+        ),
     ];
 
     for (inp, exp) in inputs {
