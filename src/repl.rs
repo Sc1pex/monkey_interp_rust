@@ -1,4 +1,4 @@
-use crate::lexer::{Lexer, TokenType};
+use crate::{ast::Parser, lexer::Lexer};
 use std::io::Write;
 
 pub fn start() {
@@ -9,13 +9,12 @@ pub fn start() {
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
 
-        let mut lexer = Lexer::new(input);
-        loop {
-            let t = lexer.next();
-            if t.ty == TokenType::Eof {
-                break;
-            }
-            println!("{:?}", t);
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        match parser.parse() {
+            Ok(p) => println!("{}", p),
+            Err(e) => println!("Parser error: {:?}", e),
         }
     }
 }

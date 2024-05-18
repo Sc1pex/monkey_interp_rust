@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 mod parser;
 use crate::lexer::TokenType;
 use std::fmt::Display;
