@@ -95,8 +95,8 @@ impl Display for Expression {
 
 #[derive(Debug, PartialEq)]
 pub struct PrefixExpr {
-    operator: TokenType,
-    right: Box<Expression>,
+    pub operator: TokenType,
+    pub right: Box<Expression>,
 }
 
 impl Display for PrefixExpr {
@@ -107,9 +107,9 @@ impl Display for PrefixExpr {
 
 #[derive(Debug, PartialEq)]
 pub struct InfixExpr {
-    left: Box<Expression>,
-    operator: TokenType,
-    right: Box<Expression>,
+    pub left: Box<Expression>,
+    pub operator: TokenType,
+    pub right: Box<Expression>,
 }
 
 impl Display for InfixExpr {
@@ -120,9 +120,9 @@ impl Display for InfixExpr {
 
 #[derive(Debug, PartialEq)]
 pub struct IfExpr {
-    condition: Box<Expression>,
-    if_branch: Vec<Statement>,
-    else_branch: Option<Vec<Statement>>,
+    pub condition: Box<Expression>,
+    pub if_branch: Vec<Statement>,
+    pub else_branch: Option<Vec<Statement>>,
 }
 
 impl Display for IfExpr {
@@ -146,8 +146,8 @@ impl Display for IfExpr {
 
 #[derive(Debug, PartialEq)]
 pub struct FuncExpr {
-    params: Vec<Ident>,
-    body: Vec<Statement>,
+    pub params: Vec<Ident>,
+    pub body: Vec<Statement>,
 }
 
 impl Display for FuncExpr {
@@ -169,8 +169,8 @@ impl Display for FuncExpr {
 #[derive(Debug, PartialEq)]
 pub struct CallExpr {
     /// `Expression::Func` or `Expression::Ident`
-    func: Box<Expression>,
-    arguments: Vec<Expression>,
+    pub func: Box<Expression>,
+    pub arguments: Vec<Expression>,
 }
 
 impl Display for CallExpr {
