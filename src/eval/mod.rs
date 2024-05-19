@@ -4,14 +4,16 @@ use crate::{
     ast::{Expression, Program, Statement},
     lexer::TokenType,
 };
+pub use env::Environment;
 use object::Object;
 
+mod env;
 mod object;
 
-pub fn eval_program(prog: Program) -> EvalResult {
+pub fn eval_program(prog: Program, env: &mut Environment) -> EvalResult {
     let mut res = Object::Null;
     for stmt in prog.statements {
-        res = eval_stmt(stmt)?;
+        res = eval_stmt(stmt, env)?;
 
         if let Object::Return(val) = res {
             return Ok(*val);
@@ -20,39 +22,46 @@ pub fn eval_program(prog: Program) -> EvalResult {
     Ok(res)
 }
 
-pub fn eval_stmt(stmt: Statement) -> EvalResult {
+pub fn eval_stmt(stmt: Statement, env: &mut Environment) -> EvalResult {
     match stmt {
-        Statement::Let(_) => todo!(),
+        Statement::Let(l) => {
+            let val = eval_expr(l.expr, env)?;
+            env.set(l.ident, val);
+            Ok(Object::Null)
+        }
         Statement::Return(r) => {
-            let val = eval_expr(r.expr)?;
+            let val = eval_expr(r.expr, env)?;
             Ok(Object::Return(Box::new(val)))
         }
-        Statement::Expression(e) => eval_expr(e.expr),
+        Statement::Expression(e) => eval_expr(e.expr, env),
     }
 }
 
-pub fn eval_expr(e: Expression) -> EvalResult {
+pub fn eval_expr(e: Expression, env: &mut Environment) -> EvalResult {
     match e {
-        Expression::Ident(_) => todo!(),
+        Expression::Ident(i) => env
+            .get(&i)
+            .cloned()
+            .ok_or(format!("identifier not found: {}", i)),
         Expression::Number(x) => Ok(Object::Integer(x)),
         Expression::Prefix(p) => {
-            let right = eval_expr(*p.right)?;
+            let right = eval_expr(*p.right, env)?;
             eval_prefix(p.operator, right)
         }
         Expression::Infix(i) => {
-            let left = eval_expr(*i.left)?;
-            let right = eval_expr(*i.right)?;
+            let left = eval_expr(*i.left, env)?;
+            let right = eval_expr(*i.right, env)?;
             eval_infix(left, i.operator, right)
         }
         Expression::Bool(b) => Ok(Object::Bool(b)),
         Expression::If(i) => {
-            let cond = eval_expr(*i.condition)?;
+            let cond = eval_expr(*i.condition, env)?;
 
             if cond.is_truthy() {
-                eval_block(i.if_branch)
+                eval_block(i.if_branch, env)
             } else {
                 match i.else_branch {
-                    Some(b) => eval_block(b),
+                    Some(b) => eval_block(b, env),
                     None => Ok(Object::Null),
                 }
             }
@@ -62,10 +71,10 @@ pub fn eval_expr(e: Expression) -> EvalResult {
     }
 }
 
-pub fn eval_block(block: Vec<Statement>) -> EvalResult {
+pub fn eval_block(block: Vec<Statement>, env: &mut Environment) -> EvalResult {
     let mut res = Object::Null;
     for stmt in block {
-        res = eval_stmt(stmt)?;
+        res = eval_stmt(stmt, env)?;
 
         if matches!(res, Object::Return(_)) {
             return Ok(res);

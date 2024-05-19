@@ -134,6 +134,20 @@ fn error_handling() {
             }"#,
             Err("unknown operator: BOOL + BOOL".into()),
         ),
+        ("baz", Err("identifier not found: baz".into())),
+    )
+}
+
+#[test]
+fn eval_let() {
+    test!(
+        ("let a = 5; a;", Ok(Object::Integer(5))),
+        ("let a = 5 * 5; a;", Ok(Object::Integer(25))),
+        ("let a = 5; let b = a; b;", Ok(Object::Integer(5))),
+        (
+            "let a = 5; let b = a; let c = a + b + 5; c;",
+            Ok(Object::Integer(15))
+        ),
     )
 }
 
@@ -143,8 +157,9 @@ fn test(cases: &[(&str, EvalResult)]) {
         let mut parser = Parser::new(lexer);
 
         let prog = parser.parse().expect("Skill issue");
+        let mut env = Environment::new();
 
-        let res = eval_program(prog);
+        let res = eval_program(prog, &mut env);
         assert_eq!(&res, exp);
     }
 }
