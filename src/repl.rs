@@ -15,7 +15,10 @@ pub fn start() {
         match parser.parse() {
             Ok(p) => {
                 let eval = eval_program(p);
-                println!("{}", eval);
+                match eval {
+                    Ok(r) => println!("{}", r),
+                    Err(e) => println!("Evaluation error: {}", e),
+                }
             }
             Err(e) => println!("Parser error: {:?}", e),
         }

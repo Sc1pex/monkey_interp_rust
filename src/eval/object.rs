@@ -18,6 +18,15 @@ impl Object {
             Object::Return(o) => o.is_truthy(),
         }
     }
+
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Object::Integer(_) => "INTEGER",
+            Object::Bool(_) => "BOOL",
+            Object::Null => "NULL",
+            Object::Return(_) => "RETURN",
+        }
+    }
 }
 
 impl Display for Object {
