@@ -74,6 +74,20 @@ fn eval_comare() {
     )
 }
 
+#[test]
+fn eval_if() {
+    test!(
+        ("if (true) { 10 }", Object::Integer(10)),
+        ("if (false) { 10 }", Object::Null),
+        ("if (1) { 10 }", Object::Integer(10)),
+        ("if (1 < 2) { 10 }", Object::Integer(10)),
+        ("if (1 > 2) { 10 }", Object::Null),
+        ("if (1 > 2) { 10 } else { 20 }", Object::Integer(20)),
+        ("if (1 < 2) { 10 } else { 20 }", Object::Integer(10)),
+        ("if (0) { 10 } else { 20 }", Object::Integer(20)),
+    )
+}
+
 fn test(cases: &[(&str, Object)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());

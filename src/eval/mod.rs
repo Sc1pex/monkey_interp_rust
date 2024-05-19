@@ -38,10 +38,29 @@ pub fn eval_expr(e: Expression) -> Object {
             eval_infix(left, i.operator, right)
         }
         Expression::Bool(b) => Object::Bool(b),
-        Expression::If(_) => todo!(),
+        Expression::If(i) => {
+            let cond = eval_expr(*i.condition);
+
+            if cond.is_truthy() {
+                eval_block(i.if_branch)
+            } else {
+                match i.else_branch {
+                    Some(b) => eval_block(b),
+                    None => Object::Null,
+                }
+            }
+        }
         Expression::Func(_) => todo!(),
         Expression::Call(_) => todo!(),
     }
+}
+
+pub fn eval_block(block: Vec<Statement>) -> Object {
+    let mut res = Object::Null;
+    for stmt in block {
+        res = eval_stmt(stmt);
+    }
+    res
 }
 
 fn eval_prefix(op: TokenType, right: Object) -> Object {
@@ -64,12 +83,7 @@ fn eval_infix(left: Object, op: TokenType, right: Object) -> Object {
 }
 
 fn eval_bang_op(value: Object) -> Object {
-    match value {
-        Object::Integer(0) => Object::Bool(true),
-        Object::Integer(_) => Object::Bool(false),
-        Object::Bool(x) => Object::Bool(!x),
-        Object::Null => Object::Bool(true),
-    }
+    Object::Bool(!value.is_truthy())
 }
 
 fn eval_minus_op(value: Object) -> Object {
