@@ -88,6 +88,25 @@ fn eval_if() {
     )
 }
 
+#[test]
+fn eval_return() {
+    test!(
+        ("return 10;", Object::Integer(10)),
+        ("return 10; 9;", Object::Integer(10)),
+        ("return 2 * 5; 9;", Object::Integer(10)),
+        ("9; return 2 * 5; 9;", Object::Integer(10)),
+        (
+            r#"if (10 > 1) {
+                if (10 > 1) {
+                 return 10;
+                }
+                return 1;
+            }"#,
+            Object::Integer(10)
+        )
+    )
+}
+
 fn test(cases: &[(&str, Object)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());

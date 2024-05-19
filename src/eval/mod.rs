@@ -12,6 +12,10 @@ pub fn eval_program(prog: Program) -> Object {
     let mut res = Object::Null;
     for stmt in prog.statements {
         res = eval_stmt(stmt);
+
+        if let Object::Return(val) = res {
+            return *val;
+        }
     }
     res
 }
@@ -19,7 +23,10 @@ pub fn eval_program(prog: Program) -> Object {
 pub fn eval_stmt(stmt: Statement) -> Object {
     match stmt {
         Statement::Let(_) => todo!(),
-        Statement::Return(_) => todo!(),
+        Statement::Return(r) => {
+            let val = eval_expr(r.expr);
+            Object::Return(Box::new(val))
+        }
         Statement::Expression(e) => eval_expr(e.expr),
     }
 }
@@ -59,6 +66,10 @@ pub fn eval_block(block: Vec<Statement>) -> Object {
     let mut res = Object::Null;
     for stmt in block {
         res = eval_stmt(stmt);
+
+        if matches!(res, Object::Return(_)) {
+            return res;
+        }
     }
     res
 }

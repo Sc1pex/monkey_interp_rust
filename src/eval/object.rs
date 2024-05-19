@@ -5,6 +5,7 @@ pub enum Object {
     Integer(i64),
     Bool(bool),
     Null,
+    Return(Box<Object>),
 }
 
 impl Object {
@@ -14,6 +15,7 @@ impl Object {
             Object::Integer(_) => true,
             Object::Bool(b) => *b,
             Object::Null => false,
+            Object::Return(o) => o.is_truthy(),
         }
     }
 }
@@ -24,6 +26,7 @@ impl Display for Object {
             Object::Integer(x) => write!(f, "{}", x),
             Object::Bool(x) => write!(f, "{}", x),
             Object::Null => write!(f, "null"),
+            Object::Return(o) => write!(f, "{}", o),
         }
     }
 }
