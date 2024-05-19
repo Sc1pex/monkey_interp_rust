@@ -1,4 +1,4 @@
-use crate::{ast::Parser, lexer::Lexer};
+use crate::{ast::Parser, eval::eval_program, lexer::Lexer};
 use std::io::Write;
 
 pub fn start() {
@@ -13,7 +13,10 @@ pub fn start() {
         let mut parser = Parser::new(lexer);
 
         match parser.parse() {
-            Ok(p) => println!("{}", p),
+            Ok(p) => {
+                let eval = eval_program(p);
+                println!("{}", eval);
+            }
             Err(e) => println!("Parser error: {:?}", e),
         }
     }
