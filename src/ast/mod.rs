@@ -7,7 +7,7 @@ pub use parser::Parser;
 type Ident = String;
 
 pub struct Program {
-    statements: Vec<Statement>,
+    pub statements: Vec<Statement>,
 }
 
 impl Display for Program {
@@ -20,7 +20,7 @@ impl Display for Program {
 }
 
 #[derive(Debug, PartialEq)]
-enum Statement {
+pub enum Statement {
     Let(LetStmt),
     Return(ReturnStmt),
     Expression(ExpressionStmt),
@@ -37,17 +37,17 @@ impl Display for Statement {
 }
 
 #[derive(Debug, PartialEq)]
-struct LetStmt {
-    ident: Ident,
-    expr: Expression,
+pub struct LetStmt {
+    pub ident: Ident,
+    pub expr: Expression,
 }
 #[derive(Debug, PartialEq)]
-struct ReturnStmt {
-    expr: Expression,
+pub struct ReturnStmt {
+    pub expr: Expression,
 }
 #[derive(Debug, PartialEq)]
-struct ExpressionStmt {
-    expr: Expression,
+pub struct ExpressionStmt {
+    pub expr: Expression,
 }
 
 impl Display for LetStmt {
@@ -67,7 +67,7 @@ impl Display for ExpressionStmt {
 }
 
 #[derive(Debug, PartialEq)]
-enum Expression {
+pub enum Expression {
     Ident(Ident),
     Number(i64),
     Prefix(PrefixExpr),
@@ -94,7 +94,7 @@ impl Display for Expression {
 }
 
 #[derive(Debug, PartialEq)]
-struct PrefixExpr {
+pub struct PrefixExpr {
     operator: TokenType,
     right: Box<Expression>,
 }
@@ -106,7 +106,7 @@ impl Display for PrefixExpr {
 }
 
 #[derive(Debug, PartialEq)]
-struct InfixExpr {
+pub struct InfixExpr {
     left: Box<Expression>,
     operator: TokenType,
     right: Box<Expression>,
@@ -119,7 +119,7 @@ impl Display for InfixExpr {
 }
 
 #[derive(Debug, PartialEq)]
-struct IfExpr {
+pub struct IfExpr {
     condition: Box<Expression>,
     if_branch: Vec<Statement>,
     else_branch: Option<Vec<Statement>>,
@@ -145,7 +145,7 @@ impl Display for IfExpr {
 }
 
 #[derive(Debug, PartialEq)]
-struct FuncExpr {
+pub struct FuncExpr {
     params: Vec<Ident>,
     body: Vec<Statement>,
 }
@@ -167,7 +167,7 @@ impl Display for FuncExpr {
 }
 
 #[derive(Debug, PartialEq)]
-struct CallExpr {
+pub struct CallExpr {
     /// `Expression::Func` or `Expression::Ident`
     func: Box<Expression>,
     arguments: Vec<Expression>,
