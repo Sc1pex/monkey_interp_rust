@@ -5,7 +5,7 @@ use crate::{
     lexer::TokenType,
 };
 pub use env::Environment;
-use object::Object;
+use object::*;
 
 mod env;
 mod object;
@@ -66,9 +66,21 @@ pub fn eval_expr(e: Expression, env: &mut Environment) -> EvalResult {
                 }
             }
         }
-        Expression::Func(_) => todo!(),
-        Expression::Call(_) => todo!(),
+        Expression::Func(f) => Ok(Object::Func(FuncObj {
+            expr: f,
+            env: Box::new(env.clone()),
+        })),
+        Expression::Call(c) => {
+            let func = eval_expr(*c.func, env)?;
+            let args = eval_exprs(c.arguments, env)?;
+
+            apply_func(func, args)
+        }
     }
+}
+
+fn eval_exprs(expr: Vec<Expression>, env: &mut Environment) -> Result<Vec<Object>, String> {
+    expr.into_iter().map(|e| eval_expr(e, env)).collect()
 }
 
 pub fn eval_block(block: Vec<Statement>, env: &mut Environment) -> EvalResult {
@@ -136,6 +148,32 @@ fn eval_integer_infix_op(left: i64, op: TokenType, right: i64) -> EvalResult {
         TokenType::Eq => Ok(Object::Bool(left == right)),
         TokenType::NotEq => Ok(Object::Bool(left != right)),
         _ => unreachable!(),
+    }
+}
+
+fn apply_func(func: Object, args: Vec<Object>) -> EvalResult {
+    let func = match func {
+        Object::Func(f) => f,
+        _ => return Err(format!("not a function: {}", func.kind())),
+    };
+
+    let mut env = Environment::new_enclosed(&func.env);
+    if args.len() != func.expr.params.len() {
+        return Err(format!(
+            "function expects {} arguments but {} were given",
+            func.expr.params.len(),
+            args.len()
+        ));
+    }
+
+    for (arg, param) in args.iter().zip(func.expr.params.into_iter()) {
+        env.set(param, arg.clone())
+    }
+    let res = eval_block(func.expr.body, &mut env)?;
+
+    match res {
+        Object::Return(r) => Ok(*r),
+        _ => Ok(res),
     }
 }
 

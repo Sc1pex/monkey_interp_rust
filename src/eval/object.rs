@@ -1,3 +1,5 @@
+use super::Environment;
+use crate::ast::FuncExpr;
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -6,6 +8,7 @@ pub enum Object {
     Bool(bool),
     Null,
     Return(Box<Object>),
+    Func(FuncObj),
 }
 
 impl Object {
@@ -16,6 +19,7 @@ impl Object {
             Object::Bool(b) => *b,
             Object::Null => false,
             Object::Return(o) => o.is_truthy(),
+            _ => false,
         }
     }
 
@@ -25,6 +29,7 @@ impl Object {
             Object::Bool(_) => "BOOL",
             Object::Null => "NULL",
             Object::Return(_) => "RETURN",
+            Object::Func(_) => "FUNCTION",
         }
     }
 }
@@ -36,6 +41,19 @@ impl Display for Object {
             Object::Bool(x) => write!(f, "{}", x),
             Object::Null => write!(f, "null"),
             Object::Return(o) => write!(f, "{}", o),
+            Object::Func(o) => write!(f, "{}", o),
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FuncObj {
+    pub expr: FuncExpr,
+    pub env: Box<Environment>,
+}
+
+impl Display for FuncObj {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.expr)
     }
 }

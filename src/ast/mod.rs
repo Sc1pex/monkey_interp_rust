@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 pub use parser::Parser;
 
-type Ident = String;
+pub type Ident = String;
 
 pub struct Program {
     pub statements: Vec<Statement>,
@@ -19,7 +19,7 @@ impl Display for Program {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     Let(LetStmt),
     Return(ReturnStmt),
@@ -36,16 +36,16 @@ impl Display for Statement {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct LetStmt {
     pub ident: Ident,
     pub expr: Expression,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ReturnStmt {
     pub expr: Expression,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ExpressionStmt {
     pub expr: Expression,
 }
@@ -66,7 +66,7 @@ impl Display for ExpressionStmt {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Ident(Ident),
     Number(i64),
@@ -93,7 +93,7 @@ impl Display for Expression {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct PrefixExpr {
     pub operator: TokenType,
     pub right: Box<Expression>,
@@ -105,7 +105,7 @@ impl Display for PrefixExpr {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct InfixExpr {
     pub left: Box<Expression>,
     pub operator: TokenType,
@@ -118,7 +118,7 @@ impl Display for InfixExpr {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IfExpr {
     pub condition: Box<Expression>,
     pub if_branch: Vec<Statement>,
@@ -144,7 +144,7 @@ impl Display for IfExpr {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FuncExpr {
     pub params: Vec<Ident>,
     pub body: Vec<Statement>,
@@ -166,7 +166,7 @@ impl Display for FuncExpr {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CallExpr {
     /// `Expression::Func` or `Expression::Ident`
     pub func: Box<Expression>,

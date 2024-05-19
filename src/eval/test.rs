@@ -151,6 +151,33 @@ fn eval_let() {
     )
 }
 
+#[test]
+fn eval_func() {
+    test!(
+        (
+            "let identity = fn(x) { x; }; identity(5);",
+            Ok(Object::Integer(5))
+        ),
+        (
+            "let identity = fn(x) { return x; }; identity(5);",
+            Ok(Object::Integer(5))
+        ),
+        (
+            "let double = fn(x) { x * 2; }; double(5);",
+            Ok(Object::Integer(10))
+        ),
+        (
+            "let add = fn(x, y) { x + y; }; add(5, 5);",
+            Ok(Object::Integer(10))
+        ),
+        (
+            "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));",
+            Ok(Object::Integer(20))
+        ),
+        ("fn(x) { x; }(5)", Ok(Object::Integer(5))),
+    )
+}
+
 fn test(cases: &[(&str, EvalResult)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());
