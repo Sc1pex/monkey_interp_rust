@@ -32,7 +32,11 @@ pub fn eval_expr(e: Expression) -> Object {
             let right = eval_expr(*p.right);
             eval_prefix(p.operator, right)
         }
-        Expression::Infix(_) => todo!(),
+        Expression::Infix(i) => {
+            let left = eval_expr(*i.left);
+            let right = eval_expr(*i.right);
+            eval_infix(left, i.operator, right)
+        }
         Expression::Bool(b) => Object::Bool(b),
         Expression::If(_) => todo!(),
         Expression::Func(_) => todo!(),
@@ -45,6 +49,17 @@ fn eval_prefix(op: TokenType, right: Object) -> Object {
         TokenType::Bang => eval_bang_op(right),
         TokenType::Minus => eval_minus_op(right),
         _ => unreachable!(),
+    }
+}
+
+fn eval_infix(left: Object, op: TokenType, right: Object) -> Object {
+    match (left, op, right) {
+        (Object::Integer(left), _, Object::Integer(right)) => {
+            eval_integer_infix_op(left, op, right)
+        }
+        (left, TokenType::Eq, right) => Object::Bool(left == right),
+        (left, TokenType::NotEq, right) => Object::Bool(left != right),
+        _ => Object::Null,
     }
 }
 
@@ -61,6 +76,21 @@ fn eval_minus_op(value: Object) -> Object {
     match value {
         Object::Integer(x) => Object::Integer(-x),
         _ => Object::Null,
+    }
+}
+
+fn eval_integer_infix_op(left: i64, op: TokenType, right: i64) -> Object {
+    match op {
+        TokenType::Plus => Object::Integer(left + right),
+        TokenType::Minus => Object::Integer(left - right),
+        TokenType::Star => Object::Integer(left * right),
+        TokenType::Slash => Object::Integer(left / right),
+
+        TokenType::Lt => Object::Bool(left < right),
+        TokenType::Gt => Object::Bool(left > right),
+        TokenType::Eq => Object::Bool(left == right),
+        TokenType::NotEq => Object::Bool(left != right),
+        _ => unreachable!(),
     }
 }
 
