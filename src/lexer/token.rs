@@ -131,11 +131,4 @@ impl TokenLiteral {
             _ => None,
         }
     }
-
-    pub fn string(&self) -> Option<&str> {
-        match self {
-            TokenLiteral::String(s) => Some(s.as_str()),
-            _ => None,
-        }
-    }
 }

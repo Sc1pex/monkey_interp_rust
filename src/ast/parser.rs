@@ -346,8 +346,8 @@ pub enum ParseErrorKind {
 
 #[derive(Debug)]
 pub struct UnexpectedErr {
-    expected: TokenType,
-    found: TokenType,
+    pub expected: TokenType,
+    pub found: TokenType,
 }
 
 impl UnexpectedErr {
