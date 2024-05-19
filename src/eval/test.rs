@@ -9,12 +9,29 @@ macro_rules! test {
 
 #[test]
 fn eval_int() {
-    test!(("5", Object::Integer(5)), ("20", Object::Integer(20)));
+    test!(
+        ("5", Object::Integer(5)),
+        ("20", Object::Integer(20)),
+        ("-5", Object::Integer(-5)),
+        ("-20", Object::Integer(-20)),
+    );
 }
 
 #[test]
 fn eval_bool() {
     test!(("true", Object::Bool(true)), ("false", Object::Bool(false)));
+}
+
+#[test]
+fn eval_bang() {
+    test!(
+        ("!true", Object::Bool(false)),
+        ("!false", Object::Bool(true)),
+        ("!5", Object::Bool(false)),
+        ("!!true", Object::Bool(true)),
+        ("!!false", Object::Bool(false)),
+        ("!!5", Object::Bool(true)),
+    )
 }
 
 fn test(cases: &[(&str, Object)]) {
