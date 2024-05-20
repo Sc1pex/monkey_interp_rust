@@ -3,10 +3,10 @@ use crate::{
     eval::{eval_program, Environment},
     lexer::Lexer,
 };
-use std::io::Write;
+use std::{cell::RefCell, io::Write, rc::Rc};
 
 pub fn start() {
-    let mut env = Environment::new();
+    let env = Rc::new(RefCell::new(Environment::new()));
     loop {
         print!("> ");
         std::io::stdout().flush().unwrap();
@@ -19,7 +19,7 @@ pub fn start() {
 
         match parser.parse() {
             Ok(p) => {
-                let eval = eval_program(p, &mut env);
+                let eval = eval_program(p, &env.clone());
                 match eval {
                     Ok(r) => println!("{}", r),
                     Err(e) => println!("Evaluation error: {}", e),

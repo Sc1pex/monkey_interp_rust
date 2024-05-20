@@ -1,6 +1,6 @@
 use super::Environment;
 use crate::ast::FuncExpr;
-use std::fmt::Display;
+use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
@@ -49,7 +49,7 @@ impl Display for Object {
 #[derive(Debug, PartialEq, Clone)]
 pub struct FuncObj {
     pub expr: FuncExpr,
-    pub env: Box<Environment>,
+    pub env: Rc<RefCell<Environment>>,
 }
 
 impl Display for FuncObj {

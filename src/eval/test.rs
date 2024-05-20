@@ -175,6 +175,10 @@ fn eval_func() {
             Ok(Object::Integer(20))
         ),
         ("fn(x) { x; }(5)", Ok(Object::Integer(5))),
+        (
+            "let fact = fn(n) { if (n == 0) { 1 } else { n * fact(n - 1)} }; fact(5)",
+            Ok(Object::Integer(120))
+        )
     )
 }
 
@@ -184,9 +188,9 @@ fn test(cases: &[(&str, EvalResult)]) {
         let mut parser = Parser::new(lexer);
 
         let prog = parser.parse().expect("Skill issue");
-        let mut env = Environment::new();
+        let env = Rc::new(RefCell::new(Environment::new()));
 
-        let res = eval_program(prog, &mut env);
+        let res = eval_program(prog, &env);
         assert_eq!(&res, exp);
     }
 }

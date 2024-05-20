@@ -6,11 +6,12 @@ use crate::{
 };
 pub use env::Environment;
 use object::*;
+use std::{cell::RefCell, rc::Rc};
 
 mod env;
 mod object;
 
-pub fn eval_program(prog: Program, env: &mut Environment) -> EvalResult {
+pub fn eval_program(prog: Program, env: &Rc<RefCell<Environment>>) -> EvalResult {
     let mut res = Object::Null;
     for stmt in prog.statements {
         res = eval_stmt(stmt, env)?;
@@ -22,11 +23,11 @@ pub fn eval_program(prog: Program, env: &mut Environment) -> EvalResult {
     Ok(res)
 }
 
-pub fn eval_stmt(stmt: Statement, env: &mut Environment) -> EvalResult {
+pub fn eval_stmt(stmt: Statement, env: &Rc<RefCell<Environment>>) -> EvalResult {
     match stmt {
         Statement::Let(l) => {
             let val = eval_expr(l.expr, env)?;
-            env.set(l.ident, val);
+            env.borrow_mut().set(l.ident, val);
             Ok(Object::Null)
         }
         Statement::Return(r) => {
@@ -37,11 +38,11 @@ pub fn eval_stmt(stmt: Statement, env: &mut Environment) -> EvalResult {
     }
 }
 
-pub fn eval_expr(e: Expression, env: &mut Environment) -> EvalResult {
+pub fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
     match e {
         Expression::Ident(i) => env
+            .borrow()
             .get(&i)
-            .cloned()
             .ok_or(format!("identifier not found: {}", i)),
         Expression::Number(x) => Ok(Object::Integer(x)),
         Expression::Prefix(p) => {
@@ -68,7 +69,7 @@ pub fn eval_expr(e: Expression, env: &mut Environment) -> EvalResult {
         }
         Expression::Func(f) => Ok(Object::Func(FuncObj {
             expr: f,
-            env: Box::new(env.clone()),
+            env: env.clone(),
         })),
         Expression::Call(c) => {
             let func = eval_expr(*c.func, env)?;
@@ -79,11 +80,14 @@ pub fn eval_expr(e: Expression, env: &mut Environment) -> EvalResult {
     }
 }
 
-fn eval_exprs(expr: Vec<Expression>, env: &mut Environment) -> Result<Vec<Object>, String> {
+fn eval_exprs(
+    expr: Vec<Expression>,
+    env: &Rc<RefCell<Environment>>,
+) -> Result<Vec<Object>, String> {
     expr.into_iter().map(|e| eval_expr(e, env)).collect()
 }
 
-pub fn eval_block(block: Vec<Statement>, env: &mut Environment) -> EvalResult {
+pub fn eval_block(block: Vec<Statement>, env: &Rc<RefCell<Environment>>) -> EvalResult {
     let mut res = Object::Null;
     for stmt in block {
         res = eval_stmt(stmt, env)?;
@@ -157,7 +161,7 @@ fn apply_func(func: Object, args: Vec<Object>) -> EvalResult {
         _ => return Err(format!("not a function: {}", func.kind())),
     };
 
-    let mut env = Environment::new_enclosed(&func.env);
+    let env = Rc::new(RefCell::new(Environment::new_enclosed(func.env)));
     if args.len() != func.expr.params.len() {
         return Err(format!(
             "function expects {} arguments but {} were given",
@@ -167,9 +171,9 @@ fn apply_func(func: Object, args: Vec<Object>) -> EvalResult {
     }
 
     for (arg, param) in args.iter().zip(func.expr.params.into_iter()) {
-        env.set(param, arg.clone())
+        env.borrow_mut().set(param, arg.clone())
     }
-    let res = eval_block(func.expr.body, &mut env)?;
+    let res = eval_block(func.expr.body, &env)?;
 
     match res {
         Object::Return(r) => Ok(*r),
