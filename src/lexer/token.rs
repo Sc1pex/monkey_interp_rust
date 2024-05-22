@@ -44,7 +44,7 @@ impl Token {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TokenType {
     Let,
     Fn,
@@ -65,6 +65,7 @@ pub enum TokenType {
     Slash,
     Star,
     Comma,
+    Colon,
     Semicolon,
     LParen,
     RParen,
@@ -105,6 +106,7 @@ impl Display for TokenType {
                 TokenType::Slash => "/",
                 TokenType::Star => "*",
                 TokenType::Comma => ",",
+                TokenType::Colon => ":",
                 TokenType::Semicolon => ";",
                 TokenType::LParen => "(",
                 TokenType::RParen => ")",

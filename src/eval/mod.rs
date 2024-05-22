@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::{
-    ast::{ArrayExpr, Expression, Ident, Program, Statement},
+    ast::{ArrayExpr, Expression, HashExpr, Ident, Program, Statement},
     lexer::TokenType,
 };
 use builtin::Builtin;
@@ -84,6 +84,7 @@ fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
 
             eval_index(left, index)
         }
+        Expression::Hash(h) => eval_hash(h, env),
     }
 }
 
@@ -106,13 +107,40 @@ fn eval_arr(a: ArrayExpr, env: &Rc<RefCell<Environment>>) -> EvalResult {
     Ok(Object::Array(ArrayObj { elements }))
 }
 
+fn eval_hash(h: HashExpr, env: &Rc<RefCell<Environment>>) -> EvalResult {
+    let keys = h
+        .pairs
+        .clone()
+        .into_iter()
+        .map(|(k, _)| eval_expr(k, env))
+        .collect::<Result<Vec<_>, _>>()?;
+    let values = h
+        .pairs
+        .into_iter()
+        .map(|(_, v)| eval_expr(v, env))
+        .collect::<Result<Vec<_>, _>>()?;
+    let map = keys.into_iter().zip(values.into_iter()).collect();
+
+    Ok(Object::Hash(HashObj { map }))
+}
+
 fn eval_index(left: Object, index: Object) -> EvalResult {
-    match (&left, index) {
+    match (&left, &index) {
         (Object::Array(left), Object::Integer(index)) => Ok(left
             .elements
-            .get(index as usize)
+            .get(*index as usize)
             .cloned()
             .unwrap_or(Object::Null)),
+        (Object::Hash(left), _) => {
+            if matches!(
+                index,
+                Object::Integer(_) | Object::String(_) | Object::Bool(_)
+            ) {
+                Ok(left.map.get(&index).cloned().unwrap_or(Object::Null))
+            } else {
+                Err(format!("unusable as hash key: {}", index.kind()))
+            }
+        }
         _ => Err(format!("index operator not supported: {}", left.kind())),
     }
 }

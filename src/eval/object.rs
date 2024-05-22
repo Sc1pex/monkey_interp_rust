@@ -1,8 +1,8 @@
 use super::{builtin::Builtin, Environment};
 use crate::ast::FuncExpr;
-use std::{cell::RefCell, fmt::Display, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fmt::Display, hash::Hash, rc::Rc};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Object {
     Integer(i64),
     Bool(bool),
@@ -12,6 +12,7 @@ pub enum Object {
     Func(FuncObj),
     Builtin(Builtin),
     Array(ArrayObj),
+    Hash(HashObj),
 
     Null,
 }
@@ -38,6 +39,18 @@ impl Object {
             Object::Func(_) => "FUNCTION",
             Object::Builtin(_) => "BUILTIN",
             Object::Array(_) => "ARRAY",
+            Object::Hash(_) => "HASH",
+        }
+    }
+}
+
+impl Hash for Object {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Object::Integer(v) => v.hash(state),
+            Object::String(v) => v.hash(state),
+            Object::Bool(v) => v.hash(state),
+            _ => panic!("Cannot hash object of type {}", self.kind()),
         }
     }
 }
@@ -53,11 +66,12 @@ impl Display for Object {
             Object::Func(o) => write!(f, "{}", o),
             Object::Builtin(_) => write!(f, "builtin"),
             Object::Array(a) => write!(f, "{}", a),
+            Object::Hash(h) => write!(f, "{}", h),
         }
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FuncObj {
     pub expr: FuncExpr,
     pub env: Rc<RefCell<Environment>>,
@@ -69,7 +83,7 @@ impl Display for FuncObj {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ArrayObj {
     pub elements: Vec<Object>,
 }
@@ -85,5 +99,24 @@ impl Display for ArrayObj {
             }
         }
         write!(f, "]")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HashObj {
+    pub map: HashMap<Object, Object>,
+}
+
+impl Display for HashObj {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{")?;
+        for (idx, (k, v)) in self.map.iter().enumerate() {
+            if idx != self.map.len() - 1 {
+                write!(f, "{}: {}, ", k, v)?;
+            } else {
+                write!(f, "{}: {}", k, v)?;
+            }
+        }
+        write!(f, "}}")
     }
 }

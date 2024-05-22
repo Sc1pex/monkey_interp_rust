@@ -52,6 +52,7 @@ impl Lexer {
             '[' => Token::new(TokenType::LBracket, None),
             ']' => Token::new(TokenType::RBracket, None),
             ',' => Token::new(TokenType::Comma, None),
+            ':' => Token::new(TokenType::Colon, None),
             ';' => Token::new(TokenType::Semicolon, None),
             '<' => Token::new(TokenType::Lt, None),
             '>' => Token::new(TokenType::Gt, None),
@@ -204,6 +205,7 @@ if (5 < 10) {
 10 != 9;
 "bar baz"
 [1, 2];
+{"foo": "bar"}
         "#;
 
         let expected = vec![
@@ -286,13 +288,21 @@ if (5 < 10) {
             TestToken::Token(TokenType::NotEq),
             TestToken::Number(9),
             TestToken::Token(TokenType::Semicolon),
+            //
             TestToken::String("bar baz".into()),
+            //
             TestToken::Token(TokenType::LBracket),
             TestToken::Number(1),
             TestToken::Token(TokenType::Comma),
             TestToken::Number(2),
             TestToken::Token(TokenType::RBracket),
             TestToken::Token(TokenType::Semicolon),
+            //
+            TestToken::Token(TokenType::LBrace),
+            TestToken::String("foo".into()),
+            TestToken::Token(TokenType::Colon),
+            TestToken::String("bar".into()),
+            TestToken::Token(TokenType::RBrace),
             TestToken::Token(TokenType::Eof),
         ];
 

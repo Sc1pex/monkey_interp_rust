@@ -1,7 +1,7 @@
 use super::{EvalResult, Object};
 use crate::ast::Ident;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Builtin {
     Len,
     First,

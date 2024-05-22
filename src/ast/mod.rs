@@ -19,7 +19,7 @@ impl Display for Program {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Statement {
     Let(LetStmt),
     Return(ReturnStmt),
@@ -36,12 +36,12 @@ impl Display for Statement {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LetStmt {
     pub ident: Ident,
     pub expr: Expression,
 }
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ReturnStmt {
     pub expr: Expression,
 }
@@ -57,7 +57,7 @@ impl Display for ReturnStmt {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Expression {
     Ident(Ident),
     Number(i64),
@@ -70,6 +70,7 @@ pub enum Expression {
     Call(CallExpr),
     Array(ArrayExpr),
     Index(IndexExpr),
+    Hash(HashExpr),
 }
 
 impl Display for Expression {
@@ -86,11 +87,12 @@ impl Display for Expression {
             Expression::Call(i) => write!(f, "{}", i),
             Expression::Array(i) => write!(f, "{}", i),
             Expression::Index(i) => write!(f, "{}", i),
+            Expression::Hash(i) => write!(f, "{}", i),
         }
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct PrefixExpr {
     pub operator: TokenType,
     pub right: Box<Expression>,
@@ -102,7 +104,7 @@ impl Display for PrefixExpr {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct InfixExpr {
     pub left: Box<Expression>,
     pub operator: TokenType,
@@ -115,7 +117,7 @@ impl Display for InfixExpr {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct IfExpr {
     pub condition: Box<Expression>,
     pub if_branch: Vec<Statement>,
@@ -141,7 +143,7 @@ impl Display for IfExpr {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FuncExpr {
     pub params: Vec<Ident>,
     pub body: Vec<Statement>,
@@ -163,7 +165,7 @@ impl Display for FuncExpr {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CallExpr {
     /// `Expression::Func` or `Expression::Ident`
     pub func: Box<Expression>,
@@ -186,7 +188,7 @@ impl Display for CallExpr {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ArrayExpr {
     pub elements: Vec<Expression>,
 }
@@ -205,7 +207,7 @@ impl Display for ArrayExpr {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct IndexExpr {
     pub left: Box<Expression>,
     pub index: Box<Expression>,
@@ -214,6 +216,25 @@ pub struct IndexExpr {
 impl Display for IndexExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}[{}])", self.left, self.index)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct HashExpr {
+    pub pairs: Vec<(Expression, Expression)>,
+}
+
+impl Display for HashExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{")?;
+        for (idx, (k, v)) in self.pairs.iter().enumerate() {
+            if idx != self.pairs.len() - 1 {
+                write!(f, "{}: {}, ", k, v)?;
+            } else {
+                write!(f, "{}: {}", k, v)?;
+            }
+        }
+        write!(f, "}}")
     }
 }
 

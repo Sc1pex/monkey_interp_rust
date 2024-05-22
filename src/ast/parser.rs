@@ -126,6 +126,7 @@ impl Parser {
             TokenType::LBracket => self.parse_arr(),
             TokenType::If => self.parse_if(),
             TokenType::Fn => self.parse_func(),
+            TokenType::LBrace => self.parse_hash(),
             _ => Err(vec![ParseErrorKind::UnknownPrefixExpr(self.cur_token.ty)]),
         }
     }
@@ -264,6 +265,33 @@ impl Parser {
         let body = self.parse_block()?;
 
         Ok(Expression::Func(FuncExpr { params, body }))
+    }
+
+    fn parse_hash(&mut self) -> ParseResult<Expression> {
+        self.next();
+
+        if self.cur_token_is(TokenType::RBrace) {
+            return Ok(Expression::Hash(HashExpr { pairs: vec![] }));
+        }
+
+        let key = self.parse_expr(Precedence::Lowest)?;
+        self.expect_peek(TokenType::Colon)?;
+        self.next();
+        let value = self.parse_expr(Precedence::Lowest)?;
+        let mut res = vec![(key, value)];
+
+        while self.peek_token_is(TokenType::Comma) {
+            self.next();
+            self.next();
+            let key = self.parse_expr(Precedence::Lowest)?;
+            self.expect_peek(TokenType::Colon)?;
+            self.next();
+            let value = self.parse_expr(Precedence::Lowest)?;
+            res.push((key, value));
+        }
+        self.next();
+
+        Ok(Expression::Hash(HashExpr { pairs: res }))
     }
 
     fn parse_params(&mut self) -> ParseResult<Vec<Ident>> {

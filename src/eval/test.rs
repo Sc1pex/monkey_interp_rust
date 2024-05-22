@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::*;
 use crate::{ast::Parser, lexer::Lexer};
 
@@ -158,6 +160,10 @@ fn error_handling() {
         (
             r#" "hello" - "world" "#,
             Err("unknown operator: STRING - STRING".into())
+        ),
+        (
+            r#"{"name": "Monkey"}[fn(x) { x }];"#,
+            Err("unusable as hash key: FUNCTION".into()),
         )
     )
 }
@@ -238,6 +244,49 @@ fn index_arr() {
         ),
         ("[1, 2, 3][3]", Ok(Object::Null)),
         ("[1, 2, 3][-1]", Ok(Object::Null)),
+    )
+}
+
+#[test]
+fn hash_literal() {
+    test!((
+        r#"
+    let two = "two";
+    {
+        "one": 10 - 9,
+        two: 1 + 1,
+        "thr" + "ee": 6 / 2,
+        4: 4,
+        true: 5,
+        false: 6
+    }
+    "#,
+        Ok(Object::Hash(HashObj {
+            map: HashMap::from([
+                (Object::String("one".into()), Object::Integer(1)),
+                (Object::String("two".into()), Object::Integer(2)),
+                (Object::String("three".into()), Object::Integer(3)),
+                (Object::Integer(4), Object::Integer(4)),
+                (Object::Bool(true), Object::Integer(5)),
+                (Object::Bool(false), Object::Integer(6)),
+            ])
+        }))
+    ))
+}
+
+#[test]
+fn index_hash() {
+    test!(
+        (r#"{"foo": 5}["foo"]"#, Ok(Object::Integer(5))),
+        (r#"{"foo": 5}["bar"]"#, Ok(Object::Null)),
+        (
+            r#"let key = "foo"; {"foo": 5}[key]"#,
+            Ok(Object::Integer(5))
+        ),
+        (r#"{}["foo"]"#, Ok(Object::Null)),
+        (r#"{5: 5}[5]"#, Ok(Object::Integer(5))),
+        (r#"{true: 5}[true]"#, Ok(Object::Integer(5))),
+        (r#"{false: 5}[false]"#, Ok(Object::Integer(5))),
     )
 }
 

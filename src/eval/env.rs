@@ -1,7 +1,7 @@
 use super::object::Object;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Environment {
     store: HashMap<String, Object>,
     outer: Option<Rc<RefCell<Environment>>>,

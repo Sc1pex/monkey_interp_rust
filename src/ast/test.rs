@@ -529,6 +529,44 @@ fn index_expr() {
 }
 
 #[test]
+fn hash_expr() {
+    let inputs = [
+        ("{}", Expression::Hash(HashExpr { pairs: vec![] })),
+        (
+            r#"{"one": 1, "two": 5 - 3, "three": 3}"#,
+            Expression::Hash(HashExpr {
+                pairs: vec![
+                    (Expression::String("one".into()), Expression::Number(1)),
+                    (
+                        Expression::String("two".into()),
+                        Expression::Infix(InfixExpr {
+                            left: Box::new(Expression::Number(5)),
+                            operator: TokenType::Minus,
+                            right: Box::new(Expression::Number(3)),
+                        }),
+                    ),
+                    (Expression::String("three".into()), Expression::Number(3)),
+                ],
+            }),
+        ),
+    ];
+
+    for (inp, expect) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let Program { statements } = parser.parse().unwrap();
+
+        assert_eq!(1, statements.len());
+        let expr = match statements[0] {
+            Statement::Expression(ref e) => e,
+            _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+        };
+        assert_eq!(expr, &expect);
+    }
+}
+
+#[test]
 fn operator_precedence() {
     let inputs = [
         ("-a * b", "((-a) * b)\n"),
