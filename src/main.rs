@@ -30,7 +30,7 @@ fn run(file: &str) {
     let program = parser.parse().unwrap();
 
     match eval_program(program, &env) {
-        Ok(r) => println!("{}", r),
+        Ok(_) => {}
         Err(e) => println!("Evaluation error: {}", e),
     }
 }
