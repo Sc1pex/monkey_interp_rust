@@ -26,6 +26,17 @@ fn eval_bool() {
 }
 
 #[test]
+fn eval_string() {
+    test!(
+        ("\"foobar\"", Ok(Object::String("foobar".into()))),
+        (
+            r#""hello" + " " + "world" "#,
+            Ok(Object::String("hello world".into()))
+        ),
+    );
+}
+
+#[test]
 fn eval_bang() {
     test!(
         ("!true", Ok(Object::Bool(false))),
@@ -74,6 +85,15 @@ fn eval_comare() {
         ("(1 < 2) == false", Ok(Object::Bool(false))),
         ("(1 > 2) == true", Ok(Object::Bool(false))),
         ("(1 > 2) == false", Ok(Object::Bool(true))),
+        (r#" "hello" == "hello" "#, Ok(Object::Bool(true))),
+        (
+            r#" "lorem ipsum" == "good placeholder" "#,
+            Ok(Object::Bool(false))
+        ),
+        (
+            r#" "lorem ipsum" != "good placeholder" "#,
+            Ok(Object::Bool(true))
+        )
     )
 }
 
@@ -135,6 +155,10 @@ fn error_handling() {
             Err("unknown operator: BOOL + BOOL".into()),
         ),
         ("baz", Err("identifier not found: baz".into())),
+        (
+            r#" "hello" - "world" "#,
+            Err("unknown operator: STRING - STRING".into())
+        )
     )
 }
 

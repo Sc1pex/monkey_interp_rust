@@ -45,6 +45,7 @@ pub fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
             .get(&i)
             .ok_or(format!("identifier not found: {}", i)),
         Expression::Number(x) => Ok(Object::Integer(x)),
+        Expression::String(s) => Ok(Object::String(s)),
         Expression::Prefix(p) => {
             let right = eval_expr(*p.right, env)?;
             eval_prefix(p.operator, right)
@@ -112,6 +113,7 @@ fn eval_infix(left: Object, op: TokenType, right: Object) -> EvalResult {
         (Object::Integer(left), _, Object::Integer(right)) => {
             eval_integer_infix_op(left, op, right)
         }
+        (Object::String(left), _, Object::String(right)) => eval_string_infix_op(left, op, right),
         (left, TokenType::Eq, right) => Ok(Object::Bool(left == right)),
         (left, TokenType::NotEq, right) => Ok(Object::Bool(left != right)),
         (left, op, right) if left.kind() != right.kind() => Err(format!(
@@ -152,6 +154,17 @@ fn eval_integer_infix_op(left: i64, op: TokenType, right: i64) -> EvalResult {
         TokenType::Eq => Ok(Object::Bool(left == right)),
         TokenType::NotEq => Ok(Object::Bool(left != right)),
         _ => unreachable!(),
+    }
+}
+
+fn eval_string_infix_op(left: String, op: TokenType, right: String) -> EvalResult {
+    match op {
+        TokenType::Plus => Ok(Object::String(left + &right)),
+
+        TokenType::Eq => Ok(Object::Bool(left == right)),
+        TokenType::NotEq => Ok(Object::Bool(left != right)),
+
+        _ => Err(format!("unknown operator: STRING {} STRING", op)),
     }
 }
 

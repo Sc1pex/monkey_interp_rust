@@ -70,6 +70,7 @@ impl Display for ExpressionStmt {
 pub enum Expression {
     Ident(Ident),
     Number(i64),
+    String(String),
     Prefix(PrefixExpr),
     Infix(InfixExpr),
     Bool(bool),
@@ -83,6 +84,7 @@ impl Display for Expression {
         match self {
             Expression::Ident(i) => write!(f, "{}", i),
             Expression::Number(x) => write!(f, "{}", x),
+            Expression::String(s) => write!(f, "{}", s),
             Expression::Prefix(p) => write!(f, "{}", p),
             Expression::Infix(p) => write!(f, "{}", p),
             Expression::Bool(b) => write!(f, "{}", b),

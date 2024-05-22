@@ -115,6 +115,7 @@ impl Parser {
         match self.cur_token.ty {
             TokenType::Ident => self.parse_ident(),
             TokenType::Number => self.parse_number(),
+            TokenType::String => self.parse_string(),
             TokenType::True | TokenType::False => self.parse_bool(),
             TokenType::Bang | TokenType::Minus => self.parse_prefix(),
             TokenType::LParen => self.parse_group(),
@@ -173,6 +174,15 @@ impl Parser {
             .num()
             .ok_or(vec![ParseErrorKind::InvalidParseFn])?;
         Ok(Expression::Number(num))
+    }
+
+    fn parse_string(&mut self) -> ParseResult<Expression> {
+        let s = self
+            .cur_token
+            .literal
+            .string()
+            .ok_or(vec![ParseErrorKind::InvalidParseFn])?;
+        Ok(Expression::String(s.into()))
     }
 
     fn parse_bool(&mut self) -> ParseResult<Expression> {

@@ -6,9 +6,12 @@ use std::{cell::RefCell, fmt::Display, rc::Rc};
 pub enum Object {
     Integer(i64),
     Bool(bool),
-    Null,
+    String(String),
+
     Return(Box<Object>),
     Func(FuncObj),
+
+    Null,
 }
 
 impl Object {
@@ -27,6 +30,7 @@ impl Object {
         match self {
             Object::Integer(_) => "INTEGER",
             Object::Bool(_) => "BOOL",
+            Object::String(_) => "STRING",
             Object::Null => "NULL",
             Object::Return(_) => "RETURN",
             Object::Func(_) => "FUNCTION",
@@ -39,6 +43,7 @@ impl Display for Object {
         match self {
             Object::Integer(x) => write!(f, "{}", x),
             Object::Bool(x) => write!(f, "{}", x),
+            Object::String(s) => write!(f, "{}", s),
             Object::Null => write!(f, "null"),
             Object::Return(o) => write!(f, "{}", o),
             Object::Func(o) => write!(f, "{}", o),

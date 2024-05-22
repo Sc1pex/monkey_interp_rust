@@ -26,6 +26,13 @@ impl Token {
                     literal: TokenLiteral::Num(lit),
                 }
             }
+            TokenType::String => {
+                let lit = literal.expect("Expected a literal for string token");
+                Self {
+                    ty,
+                    literal: TokenLiteral::String(lit),
+                }
+            }
             _ if literal.is_none() => Self {
                 literal: TokenLiteral::String(ty.to_string()),
                 ty,
@@ -49,6 +56,7 @@ pub enum TokenType {
 
     Ident,
     Number,
+    String,
 
     Assign,
     Bang,
@@ -87,6 +95,7 @@ impl Display for TokenType {
                 TokenType::False => "false",
                 TokenType::Ident => "ident",
                 TokenType::Number => "number",
+                TokenType::String => "string",
                 TokenType::Assign => "=",
                 TokenType::Bang => "!",
                 TokenType::Plus => "+",
@@ -128,6 +137,13 @@ impl TokenLiteral {
     pub fn num(&self) -> Option<i64> {
         match self {
             &TokenLiteral::Num(n) => Some(n),
+            _ => None,
+        }
+    }
+
+    pub fn string(&self) -> Option<&str> {
+        match self {
+            TokenLiteral::String(s) => Some(s.as_str()),
             _ => None,
         }
     }

@@ -57,6 +57,7 @@ impl Lexer {
 
             ch if is_ident_char(ch, true) => return self.read_ident(),
             ch if ch.is_ascii_digit() => return self.read_num(),
+            '"' => self.read_string(),
 
             _ => Token::new(TokenType::Illegal, None),
         };
@@ -85,6 +86,20 @@ impl Lexer {
         }
         let num: String = self.input[start..self.pos].iter().collect();
         Token::new(TokenType::Number, Some(num))
+    }
+
+    fn read_string(&mut self) -> Token {
+        let start = self.pos + 1;
+
+        loop {
+            self.read();
+            if self.ch == '"' || self.ch == '\0' {
+                break;
+            }
+        }
+
+        let str: String = self.input[start..self.pos].iter().collect();
+        Token::new(TokenType::String, Some(str))
     }
 
     fn read(&mut self) {
@@ -143,6 +158,7 @@ mod test {
         Token(TokenType),
         Number(i64),
         Ident(String),
+        String(String),
     }
 
     impl PartialEq<Token> for TestToken {
@@ -153,6 +169,9 @@ mod test {
                 }
                 TestToken::Ident(s) => {
                     other.ty == TokenType::Ident && other.literal == TokenLiteral::Ident(s.into())
+                }
+                TestToken::String(s) => {
+                    other.ty == TokenType::String && other.literal == TokenLiteral::String(s.into())
                 }
                 TestToken::Token(t) => other.ty == *t,
             }
@@ -181,6 +200,7 @@ if (5 < 10) {
 
 10 == 10;
 10 != 9;
+"bar baz"
         "#;
 
         let expected = vec![
@@ -263,6 +283,7 @@ if (5 < 10) {
             TestToken::Token(TokenType::NotEq),
             TestToken::Number(9),
             TestToken::Token(TokenType::Semicolon),
+            TestToken::String("bar baz".into()),
             TestToken::Token(TokenType::Eof),
         ];
 

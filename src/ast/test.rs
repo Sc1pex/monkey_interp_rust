@@ -25,6 +25,13 @@ fn let_stmt() {
                 expr: Expression::Ident("y".into()),
             }),
         ),
+        (
+            "let baz = \"foobar\";",
+            Statement::Let(LetStmt {
+                ident: "baz".into(),
+                expr: Expression::String("foobar".into()),
+            }),
+        ),
     ];
 
     for (inp, expect) in inputs {
@@ -111,6 +118,27 @@ fn number_expr() {
     match &expr.expr {
         Expression::Number(x) => assert_eq!(*x, 69420),
         e => panic!("expected Number expression, got {:?}", e),
+    }
+}
+
+#[test]
+fn string_expr() {
+    let input = "\"hello there\";".into();
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+
+    let Program { statements } = parser.parse().unwrap();
+
+    assert_eq!(1, statements.len());
+    let expr = match statements[0] {
+        Statement::Expression(ref e) => e,
+        _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+    };
+
+    match &expr.expr {
+        Expression::String(s) => assert_eq!(s, "hello there"),
+        e => panic!("expected String expression, got {:?}", e),
     }
 }
 
