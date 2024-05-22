@@ -255,6 +255,114 @@ fn builtin_len() {
             r#"len("one", "two")"#,
             Err("wrong number of arguments. got=2, want=1".into())
         ),
+        (r#"len([1, 2, 3, 4])"#, Ok(Object::Integer(4))),
+    )
+}
+
+#[test]
+fn builtin_first() {
+    test!(
+        (r#"first(["a", "b"])"#, Ok(Object::String("a".into()))),
+        (r#"first([])"#, Ok(Object::Null)),
+        (
+            r#"first(1)"#,
+            Err("argument to `first` not supported, got INTEGER".into())
+        ),
+        (
+            r#"first("one", "two")"#,
+            Err("wrong number of arguments. got=2, want=1".into())
+        ),
+    )
+}
+
+#[test]
+fn builtin_last() {
+    test!(
+        (r#"last(["a", "b"])"#, Ok(Object::String("b".into()))),
+        (r#"last([])"#, Ok(Object::Null)),
+        (
+            r#"last(1)"#,
+            Err("argument to `last` not supported, got INTEGER".into())
+        ),
+        (
+            r#"last("one", "two")"#,
+            Err("wrong number of arguments. got=2, want=1".into())
+        ),
+    )
+}
+
+#[test]
+fn builtin_rest() {
+    test!(
+        (
+            r#"rest(["a", "b", "c"])"#,
+            Ok(Object::Array(ArrayObj {
+                elements: vec![Object::String("b".into()), Object::String("c".into())]
+            }))
+        ),
+        (
+            r#"rest(["a"])"#,
+            Ok(Object::Array(ArrayObj { elements: vec![] }))
+        ),
+        (
+            r#"rest([])"#,
+            Ok(Object::Array(ArrayObj { elements: vec![] }))
+        ),
+        (
+            r#"rest(1)"#,
+            Err("argument to `rest` not supported, got INTEGER".into())
+        ),
+        (
+            r#"rest("one", "two")"#,
+            Err("wrong number of arguments. got=2, want=1".into())
+        ),
+    )
+}
+
+#[test]
+fn builtin_push() {
+    test!(
+        (
+            r#"push(["a", "b"], "c")"#,
+            Ok(Object::Array(ArrayObj {
+                elements: vec![
+                    Object::String("a".into()),
+                    Object::String("b".into()),
+                    Object::String("c".into())
+                ]
+            }))
+        ),
+        (
+            r#"push(["a"], 1)"#,
+            Ok(Object::Array(ArrayObj {
+                elements: vec![Object::String("a".into()), Object::Integer(1)]
+            }))
+        ),
+        (
+            r#"push(["a"], [1])"#,
+            Ok(Object::Array(ArrayObj {
+                elements: vec![
+                    Object::String("a".into()),
+                    Object::Array(ArrayObj {
+                        elements: vec![Object::Integer(1)]
+                    })
+                ]
+            }))
+        ),
+        (
+            r#"push([], "bar")"#,
+            Ok(Object::Array(ArrayObj {
+                elements: vec![Object::String("bar".into())]
+            }))
+        ),
+        (
+            r#"push(1, 2)"#,
+            Err("argument to `push` not supported, got INTEGER".into())
+        ),
+        (
+            r#"push([])"#,
+            Err("wrong number of arguments. got=1, want=2".into())
+        ),
     )
 }
 
