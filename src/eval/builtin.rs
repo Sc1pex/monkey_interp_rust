@@ -8,6 +8,7 @@ pub enum Builtin {
     Last,
     Rest,
     Push,
+    Puts,
 }
 
 impl Builtin {
@@ -18,6 +19,7 @@ impl Builtin {
             "last" => Some(Object::Builtin(Builtin::Last)),
             "rest" => Some(Object::Builtin(Builtin::Rest)),
             "push" => Some(Object::Builtin(Builtin::Push)),
+            "puts" => Some(Object::Builtin(Builtin::Puts)),
             _ => None,
         }
     }
@@ -29,6 +31,7 @@ impl Builtin {
             Builtin::Last => last(args),
             Builtin::Rest => rest(args),
             Builtin::Push => push(args),
+            Builtin::Puts => puts(args),
         }
     }
 }
@@ -124,4 +127,11 @@ fn push(args: Vec<Object>) -> EvalResult {
             args[0].kind()
         )),
     }
+}
+
+fn puts(args: Vec<Object>) -> EvalResult {
+    for arg in args {
+        println!("{}", arg);
+    }
+    Ok(Object::Null)
 }
