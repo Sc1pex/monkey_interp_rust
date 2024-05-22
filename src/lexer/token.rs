@@ -70,6 +70,8 @@ pub enum TokenType {
     RParen,
     LBrace,
     RBrace,
+    LBracket,
+    RBracket,
 
     Lt,
     Gt,
@@ -108,6 +110,8 @@ impl Display for TokenType {
                 TokenType::RParen => ")",
                 TokenType::LBrace => "{",
                 TokenType::RBrace => "}",
+                TokenType::LBracket => "[",
+                TokenType::RBracket => "]",
                 TokenType::Lt => "<",
                 TokenType::Gt => ">",
                 TokenType::Eq => "==",

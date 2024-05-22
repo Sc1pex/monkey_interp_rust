@@ -104,6 +104,10 @@ impl Parser {
                     self.next();
                     left = self.parse_call(left)?;
                 }
+                TokenType::LBracket => {
+                    self.next();
+                    left = self.parse_index(left)?;
+                }
                 _ => return Ok(left),
             }
         }
@@ -119,6 +123,7 @@ impl Parser {
             TokenType::True | TokenType::False => self.parse_bool(),
             TokenType::Bang | TokenType::Minus => self.parse_prefix(),
             TokenType::LParen => self.parse_group(),
+            TokenType::LBracket => self.parse_arr(),
             TokenType::If => self.parse_if(),
             TokenType::Fn => self.parse_func(),
             _ => Err(vec![ParseErrorKind::UnknownPrefixExpr(self.cur_token.ty)]),
@@ -309,15 +314,32 @@ impl Parser {
 
     fn parse_call(&mut self, func: Expression) -> ParseResult<Expression> {
         self.next();
-        let args = self.parse_args()?;
+        let args = self.parse_expr_list(TokenType::RParen)?;
         Ok(Expression::Call(CallExpr {
             func: Box::new(func),
             arguments: args,
         }))
     }
 
-    fn parse_args(&mut self) -> ParseResult<Vec<Expression>> {
-        if self.cur_token_is(TokenType::RParen) {
+    fn parse_index(&mut self, left: Expression) -> ParseResult<Expression> {
+        self.next();
+        let index = self.parse_expr(Precedence::Lowest)?;
+        self.expect_peek(TokenType::RBracket)?;
+
+        Ok(Expression::Index(IndexExpr {
+            left: Box::new(left),
+            index: Box::new(index),
+        }))
+    }
+
+    fn parse_arr(&mut self) -> ParseResult<Expression> {
+        self.next();
+        let elements = self.parse_expr_list(TokenType::RBracket)?;
+        Ok(Expression::Array(ArrayExpr { elements }))
+    }
+
+    fn parse_expr_list(&mut self, end: TokenType) -> ParseResult<Vec<Expression>> {
+        if self.cur_token_is(end) {
             return Ok(vec![]);
         }
 
@@ -375,6 +397,7 @@ pub enum Precedence {
     Prodcut,
     Prefix,
     Call,
+    Index,
 }
 
 fn token_precedence(ty: TokenType) -> Precedence {
@@ -384,6 +407,7 @@ fn token_precedence(ty: TokenType) -> Precedence {
         TokenType::Plus | TokenType::Minus => Precedence::Sum,
         TokenType::Star | TokenType::Slash => Precedence::Prodcut,
         TokenType::LParen => Precedence::Call,
+        TokenType::LBracket => Precedence::Index,
         _ => Precedence::Lowest,
     }
 }

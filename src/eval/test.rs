@@ -207,6 +207,41 @@ fn eval_func() {
 }
 
 #[test]
+fn array_literal() {
+    test!((
+        "[1, 2 * 2, 3 + 3]",
+        Ok(Object::Array(ArrayObj {
+            elements: vec![Object::Integer(1), Object::Integer(4), Object::Integer(6)]
+        }))
+    ))
+}
+
+#[test]
+fn index_arr() {
+    test!(
+        ("[1, 2, 3][0]", Ok(Object::Integer(1))),
+        ("[1, 2, 3][1]", Ok(Object::Integer(2))),
+        ("[1, 2, 3][2]", Ok(Object::Integer(3))),
+        ("let i = 0; [1][i];", Ok(Object::Integer(1))),
+        ("[1, 2, 3][1 + 1];", Ok(Object::Integer(3))),
+        (
+            "let myArray = [1, 2, 3]; myArray[2];",
+            Ok(Object::Integer(3))
+        ),
+        (
+            "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+            Ok(Object::Integer(6))
+        ),
+        (
+            "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+            Ok(Object::Integer(2))
+        ),
+        ("[1, 2, 3][3]", Ok(Object::Null)),
+        ("[1, 2, 3][-1]", Ok(Object::Null)),
+    )
+}
+
+#[test]
 fn builtin_len() {
     test!(
         (r#"len("")"#, Ok(Object::Integer(0))),

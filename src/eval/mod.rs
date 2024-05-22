@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::{
-    ast::{Expression, Ident, Program, Statement},
+    ast::{ArrayExpr, Expression, Ident, Program, Statement},
     lexer::TokenType,
 };
 use builtin::Builtin;
@@ -77,6 +77,13 @@ pub fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
 
             apply_func(func, args)
         }
+        Expression::Array(a) => eval_arr(a, env),
+        Expression::Index(i) => {
+            let left = eval_expr(*i.left, env)?;
+            let index = eval_expr(*i.index, env)?;
+
+            eval_index(left, index)
+        }
     }
 }
 
@@ -87,6 +94,26 @@ fn eval_ident(ident: Ident, env: &Rc<RefCell<Environment>>) -> EvalResult {
         Ok(b)
     } else {
         Err(format!("identifier not found: {}", ident))
+    }
+}
+
+fn eval_arr(a: ArrayExpr, env: &Rc<RefCell<Environment>>) -> EvalResult {
+    let elements = a
+        .elements
+        .into_iter()
+        .map(|e| eval_expr(e, env))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(Object::Array(ArrayObj { elements }))
+}
+
+fn eval_index(left: Object, index: Object) -> EvalResult {
+    match (&left, index) {
+        (Object::Array(left), Object::Integer(index)) => Ok(left
+            .elements
+            .get(index as usize)
+            .cloned()
+            .unwrap_or(Object::Null)),
+        _ => Err(format!("index operator not supported: {}", left.kind())),
     }
 }
 

@@ -465,6 +465,70 @@ fn call_expr_arguments() {
 }
 
 #[test]
+fn array_expr() {
+    let inputs = [
+        ("[]", Expression::Array(ArrayExpr { elements: vec![] })),
+        (
+            "[1, 2 * 2, 3 + 3]",
+            Expression::Array(ArrayExpr {
+                elements: vec![
+                    Expression::Number(1),
+                    Expression::Infix(InfixExpr {
+                        left: Box::new(Expression::Number(2)),
+                        operator: TokenType::Star,
+                        right: Box::new(Expression::Number(2)),
+                    }),
+                    Expression::Infix(InfixExpr {
+                        left: Box::new(Expression::Number(3)),
+                        operator: TokenType::Plus,
+                        right: Box::new(Expression::Number(3)),
+                    }),
+                ],
+            }),
+        ),
+    ];
+
+    for (inp, expect) in inputs {
+        let lexer = Lexer::new(inp.into());
+        let mut parser = Parser::new(lexer);
+
+        let Program { statements } = parser.parse().unwrap();
+
+        assert_eq!(1, statements.len());
+        let expr = match statements[0] {
+            Statement::Expression(ref e) => e,
+            _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+        };
+        assert_eq!(expr, &expect);
+    }
+}
+
+#[test]
+fn index_expr() {
+    let input = "arr[1 + 3]";
+    let expect = Expression::Index(IndexExpr {
+        left: Box::new(Expression::Ident("arr".into())),
+        index: Box::new(Expression::Infix(InfixExpr {
+            left: Box::new(Expression::Number(1)),
+            operator: TokenType::Plus,
+            right: Box::new(Expression::Number(3)),
+        })),
+    });
+
+    let lexer = Lexer::new(input.into());
+    let mut parser = Parser::new(lexer);
+
+    let Program { statements } = parser.parse().unwrap();
+
+    assert_eq!(1, statements.len());
+    let expr = match statements[0] {
+        Statement::Expression(ref e) => e,
+        _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
+    };
+    assert_eq!(expr, &expect);
+}
+
+#[test]
 fn operator_precedence() {
     let inputs = [
         ("-a * b", "((-a) * b)\n"),
@@ -495,6 +559,14 @@ fn operator_precedence() {
         (
             "add(a + b + c * d / f + g)",
             "add((((a + b) + ((c * d) / f)) + g))\n",
+        ),
+        (
+            "a * [1, 2, 3, 4][b * c] * d",
+            "((a * ([1, 2, 3, 4][(b * c)])) * d)\n",
+        ),
+        (
+            "add(a * b[2], b[1], 2 * [1, 2][1])",
+            "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))\n",
         ),
     ];
 

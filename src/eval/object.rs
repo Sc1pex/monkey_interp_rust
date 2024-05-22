@@ -11,6 +11,7 @@ pub enum Object {
     Return(Box<Object>),
     Func(FuncObj),
     Builtin(Builtin),
+    Array(ArrayObj),
 
     Null,
 }
@@ -36,6 +37,7 @@ impl Object {
             Object::Return(_) => "RETURN",
             Object::Func(_) => "FUNCTION",
             Object::Builtin(_) => "BUILTIN",
+            Object::Array(_) => "ARRAY",
         }
     }
 }
@@ -50,6 +52,7 @@ impl Display for Object {
             Object::Return(o) => write!(f, "{}", o),
             Object::Func(o) => write!(f, "{}", o),
             Object::Builtin(_) => write!(f, "builtin"),
+            Object::Array(a) => write!(f, "{}", a),
         }
     }
 }
@@ -63,5 +66,24 @@ pub struct FuncObj {
 impl Display for FuncObj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.expr)
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ArrayObj {
+    pub elements: Vec<Object>,
+}
+
+impl Display for ArrayObj {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
+        for (idx, s) in self.elements.iter().enumerate() {
+            if idx != self.elements.len() - 1 {
+                write!(f, "{}, ", s)?;
+            } else {
+                write!(f, "{}", s)?;
+            }
+        }
+        write!(f, "]")
     }
 }

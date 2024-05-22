@@ -68,6 +68,8 @@ pub enum Expression {
     If(IfExpr),
     Func(FuncExpr),
     Call(CallExpr),
+    Array(ArrayExpr),
+    Index(IndexExpr),
 }
 
 impl Display for Expression {
@@ -82,6 +84,8 @@ impl Display for Expression {
             Expression::If(i) => write!(f, "{}", i),
             Expression::Func(i) => write!(f, "{}", i),
             Expression::Call(i) => write!(f, "{}", i),
+            Expression::Array(i) => write!(f, "{}", i),
+            Expression::Index(i) => write!(f, "{}", i),
         }
     }
 }
@@ -179,6 +183,37 @@ impl Display for CallExpr {
             }
         }
         write!(f, ")")
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ArrayExpr {
+    pub elements: Vec<Expression>,
+}
+
+impl Display for ArrayExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
+        for (idx, s) in self.elements.iter().enumerate() {
+            if idx != self.elements.len() - 1 {
+                write!(f, "{}, ", s)?;
+            } else {
+                write!(f, "{}", s)?;
+            }
+        }
+        write!(f, "]")
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct IndexExpr {
+    pub left: Box<Expression>,
+    pub index: Box<Expression>,
+}
+
+impl Display for IndexExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}[{}])", self.left, self.index)
     }
 }
 
