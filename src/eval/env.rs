@@ -1,18 +1,18 @@
 use super::object::Object;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct Environment {
     store: HashMap<String, Object>,
     outer: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Environment {
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Self {
             store: HashMap::new(),
             outer: None,
-        }
+        }))
     }
 
     pub fn new_enclosed(outer: Rc<RefCell<Environment>>) -> Self {

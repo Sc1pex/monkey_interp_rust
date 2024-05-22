@@ -3,10 +3,10 @@ use crate::{
     eval::{eval_program, Environment},
     lexer::Lexer,
 };
-use std::{cell::RefCell, io::Write, rc::Rc};
+use std::io::Write;
 
 pub fn start() {
-    let env = Rc::new(RefCell::new(Environment::new()));
+    let env = Environment::new();
     loop {
         print!("> ");
         std::io::stdout().flush().unwrap();

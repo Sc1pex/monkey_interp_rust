@@ -372,7 +372,7 @@ fn test(cases: &[(&str, EvalResult)]) {
         let mut parser = Parser::new(lexer);
 
         let prog = parser.parse().expect("Skill issue");
-        let env = Rc::new(RefCell::new(Environment::new()));
+        let env = Environment::new();
 
         let res = eval_program(prog, &env);
         assert_eq!(&res, exp);

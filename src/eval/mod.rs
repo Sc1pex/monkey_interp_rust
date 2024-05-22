@@ -25,7 +25,7 @@ pub fn eval_program(prog: Program, env: &Rc<RefCell<Environment>>) -> EvalResult
     Ok(res)
 }
 
-pub fn eval_stmt(stmt: Statement, env: &Rc<RefCell<Environment>>) -> EvalResult {
+fn eval_stmt(stmt: Statement, env: &Rc<RefCell<Environment>>) -> EvalResult {
     match stmt {
         Statement::Let(l) => {
             let val = eval_expr(l.expr, env)?;
@@ -40,7 +40,7 @@ pub fn eval_stmt(stmt: Statement, env: &Rc<RefCell<Environment>>) -> EvalResult 
     }
 }
 
-pub fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
+fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
     match e {
         Expression::Ident(i) => eval_ident(i, env),
         Expression::Number(x) => Ok(Object::Integer(x)),
@@ -124,7 +124,7 @@ fn eval_exprs(
     expr.into_iter().map(|e| eval_expr(e, env)).collect()
 }
 
-pub fn eval_block(block: Vec<Statement>, env: &Rc<RefCell<Environment>>) -> EvalResult {
+fn eval_block(block: Vec<Statement>, env: &Rc<RefCell<Environment>>) -> EvalResult {
     let mut res = Object::Null;
     for stmt in block {
         res = eval_stmt(stmt, env)?;
