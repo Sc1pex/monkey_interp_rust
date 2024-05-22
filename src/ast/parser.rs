@@ -56,7 +56,7 @@ impl Parser {
             self.next();
         }
 
-        Ok(Statement::Expression(ExpressionStmt { expr }))
+        Ok(Statement::Expression(expr))
     }
 
     fn parse_return(&mut self) -> ParseResult<Statement> {

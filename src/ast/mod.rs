@@ -23,7 +23,7 @@ impl Display for Program {
 pub enum Statement {
     Let(LetStmt),
     Return(ReturnStmt),
-    Expression(ExpressionStmt),
+    Expression(Expression),
 }
 
 impl Display for Statement {
@@ -45,10 +45,6 @@ pub struct LetStmt {
 pub struct ReturnStmt {
     pub expr: Expression,
 }
-#[derive(Debug, PartialEq, Clone)]
-pub struct ExpressionStmt {
-    pub expr: Expression,
-}
 
 impl Display for LetStmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -58,11 +54,6 @@ impl Display for LetStmt {
 impl Display for ReturnStmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "return {};", self.expr)
-    }
-}
-impl Display for ExpressionStmt {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.expr)
     }
 }
 

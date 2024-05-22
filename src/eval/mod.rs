@@ -36,7 +36,7 @@ pub fn eval_stmt(stmt: Statement, env: &Rc<RefCell<Environment>>) -> EvalResult 
             let val = eval_expr(r.expr, env)?;
             Ok(Object::Return(Box::new(val)))
         }
-        Statement::Expression(e) => eval_expr(e.expr, env),
+        Statement::Expression(e) => eval_expr(e, env),
     }
 }
 

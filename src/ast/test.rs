@@ -94,7 +94,7 @@ fn ident_expr() {
         _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
     };
 
-    match &expr.expr {
+    match &expr {
         Expression::Ident(i) => assert_eq!(i, "foobar"),
         e => panic!("expected Ident expression, got {:?}", e),
     }
@@ -115,7 +115,7 @@ fn number_expr() {
         _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
     };
 
-    match &expr.expr {
+    match &expr {
         Expression::Number(x) => assert_eq!(*x, 69420),
         e => panic!("expected Number expression, got {:?}", e),
     }
@@ -136,7 +136,7 @@ fn string_expr() {
         _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
     };
 
-    match &expr.expr {
+    match &expr {
         Expression::String(s) => assert_eq!(s, "hello there"),
         e => panic!("expected String expression, got {:?}", e),
     }
@@ -173,7 +173,7 @@ fn prefix_expr() {
             _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
         };
 
-        match &expr.expr {
+        match &expr {
             Expression::Prefix(p) => assert_eq!(p, &expect),
             e => panic!("expected Prefix expression, got {:?}", e),
         }
@@ -261,7 +261,7 @@ fn infix_expr() {
             _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
         };
 
-        match &expr.expr {
+        match &expr {
             Expression::Infix(p) => assert_eq!(p, &expect),
             e => panic!("expected Infix expression, got {:?}", e),
         }
@@ -283,7 +283,7 @@ fn bool_expr() {
 
         assert_eq!(1, statements.len());
         let expr = match statements[0] {
-            Statement::Expression(ref e) => &e.expr,
+            Statement::Expression(ref e) => e,
             _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
         };
         assert_eq!(expr, &expect);
@@ -301,9 +301,7 @@ fn if_else_expr() {
                     operator: TokenType::Lt,
                     right: Box::new(Expression::Ident("y".into())),
                 })),
-                if_branch: vec![Statement::Expression(ExpressionStmt {
-                    expr: Expression::Ident("x".into()),
-                })],
+                if_branch: vec![Statement::Expression(Expression::Ident("x".into()))],
                 else_branch: None,
             },
         ),
@@ -315,12 +313,8 @@ fn if_else_expr() {
                     operator: TokenType::Lt,
                     right: Box::new(Expression::Ident("y".into())),
                 })),
-                if_branch: vec![Statement::Expression(ExpressionStmt {
-                    expr: Expression::Ident("x".into()),
-                })],
-                else_branch: Some(vec![Statement::Expression(ExpressionStmt {
-                    expr: Expression::Ident("y".into()),
-                })]),
+                if_branch: vec![Statement::Expression(Expression::Ident("x".into()))],
+                else_branch: Some(vec![Statement::Expression(Expression::Ident("y".into()))]),
             },
         ),
     ];
@@ -333,7 +327,7 @@ fn if_else_expr() {
 
         assert_eq!(1, statements.len());
         let expr = match statements[0] {
-            Statement::Expression(ref e) => &e.expr,
+            Statement::Expression(ref e) => e,
             _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
         };
 
@@ -349,13 +343,11 @@ fn func_expr() {
     let input = "fn(x, y) { x * y; }";
     let expected = FuncExpr {
         params: vec!["x".into(), "y".into()],
-        body: vec![Statement::Expression(ExpressionStmt {
-            expr: Expression::Infix(InfixExpr {
-                left: Box::new(Expression::Ident("x".into())),
-                operator: TokenType::Star,
-                right: Box::new(Expression::Ident("y".into())),
-            }),
-        })],
+        body: vec![Statement::Expression(Expression::Infix(InfixExpr {
+            left: Box::new(Expression::Ident("x".into())),
+            operator: TokenType::Star,
+            right: Box::new(Expression::Ident("y".into())),
+        }))],
     };
 
     let lexer = Lexer::new(input.into());
@@ -365,7 +357,7 @@ fn func_expr() {
 
     assert_eq!(1, statements.len());
     let expr = match statements[0] {
-        Statement::Expression(ref e) => &e.expr,
+        Statement::Expression(ref e) => e,
         _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
     };
     match &expr {
@@ -393,7 +385,7 @@ fn func_params() {
 
         assert_eq!(1, statements.len());
         let expr = match statements[0] {
-            Statement::Expression(ref e) => &e.expr,
+            Statement::Expression(ref e) => e,
             _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
         };
         match &expr {
@@ -430,7 +422,7 @@ fn call_expr() {
 
     assert_eq!(1, statements.len());
     let expr = match statements[0] {
-        Statement::Expression(ref e) => &e.expr,
+        Statement::Expression(ref e) => e,
         _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
     };
     match &expr {
@@ -462,7 +454,7 @@ fn call_expr_arguments() {
 
         assert_eq!(1, statements.len());
         let expr = match statements[0] {
-            Statement::Expression(ref e) => &e.expr,
+            Statement::Expression(ref e) => e,
             _ => panic!("expected ExpressionStatement, got {:?}", statements[0]),
         };
         match &expr {
