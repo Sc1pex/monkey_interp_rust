@@ -1,4 +1,4 @@
-use super::Environment;
+use super::{builtin::Builtin, Environment};
 use crate::ast::FuncExpr;
 use std::{cell::RefCell, fmt::Display, rc::Rc};
 
@@ -10,6 +10,7 @@ pub enum Object {
 
     Return(Box<Object>),
     Func(FuncObj),
+    Builtin(Builtin),
 
     Null,
 }
@@ -34,6 +35,7 @@ impl Object {
             Object::Null => "NULL",
             Object::Return(_) => "RETURN",
             Object::Func(_) => "FUNCTION",
+            Object::Builtin(_) => "BUILTIN",
         }
     }
 }
@@ -47,6 +49,7 @@ impl Display for Object {
             Object::Null => write!(f, "null"),
             Object::Return(o) => write!(f, "{}", o),
             Object::Func(o) => write!(f, "{}", o),
+            Object::Builtin(_) => write!(f, "builtin"),
         }
     }
 }

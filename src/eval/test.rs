@@ -206,6 +206,23 @@ fn eval_func() {
     )
 }
 
+#[test]
+fn builtin_len() {
+    test!(
+        (r#"len("")"#, Ok(Object::Integer(0))),
+        (r#"len("four")"#, Ok(Object::Integer(4))),
+        (r#"len("hello world")"#, Ok(Object::Integer(11))),
+        (
+            r#"len(1)"#,
+            Err("argument to `len` not supported, got INTEGER".into())
+        ),
+        (
+            r#"len("one", "two")"#,
+            Err("wrong number of arguments. got=2, want=1".into())
+        ),
+    )
+}
+
 fn test(cases: &[(&str, EvalResult)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());

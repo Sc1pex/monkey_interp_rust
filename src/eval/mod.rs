@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 
 use crate::{
-    ast::{Expression, Program, Statement},
+    ast::{Expression, Ident, Program, Statement},
     lexer::TokenType,
 };
+use builtin::Builtin;
 pub use env::Environment;
 use object::*;
 use std::{cell::RefCell, rc::Rc};
 
+mod builtin;
 mod env;
 mod object;
 
@@ -40,10 +42,7 @@ pub fn eval_stmt(stmt: Statement, env: &Rc<RefCell<Environment>>) -> EvalResult 
 
 pub fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
     match e {
-        Expression::Ident(i) => env
-            .borrow()
-            .get(&i)
-            .ok_or(format!("identifier not found: {}", i)),
+        Expression::Ident(i) => eval_ident(i, env),
         Expression::Number(x) => Ok(Object::Integer(x)),
         Expression::String(s) => Ok(Object::String(s)),
         Expression::Prefix(p) => {
@@ -78,6 +77,16 @@ pub fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
 
             apply_func(func, args)
         }
+    }
+}
+
+fn eval_ident(ident: Ident, env: &Rc<RefCell<Environment>>) -> EvalResult {
+    if let Some(r) = env.borrow().get(&ident) {
+        Ok(r)
+    } else if let Some(b) = Builtin::from_ident(&ident) {
+        Ok(b)
+    } else {
+        Err(format!("identifier not found: {}", ident))
     }
 }
 
@@ -171,6 +180,7 @@ fn eval_string_infix_op(left: String, op: TokenType, right: String) -> EvalResul
 fn apply_func(func: Object, args: Vec<Object>) -> EvalResult {
     let func = match func {
         Object::Func(f) => f,
+        Object::Builtin(b) => return b.call(args),
         _ => return Err(format!("not a function: {}", func.kind())),
     };
 
