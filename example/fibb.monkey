@@ -5,4 +5,4 @@ let fib = fn(n) {
     return fib(n - 1) + fib(n - 2);
 }
 
-puts(fib(28));
+puts(fib(30));

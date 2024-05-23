@@ -3,12 +3,12 @@ use crate::ast::FuncExpr;
 use std::{cell::RefCell, collections::HashMap, fmt::Display, hash::Hash, rc::Rc};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Object {
+pub enum Obj {
     Integer(i64),
     Bool(bool),
     String(String),
 
-    Return(Box<Object>),
+    Return(Rc<Obj>),
     Func(FuncObj),
     Builtin(Builtin),
     Array(ArrayObj),
@@ -17,56 +17,56 @@ pub enum Object {
     Null,
 }
 
-impl Object {
+impl Obj {
     pub fn is_truthy(&self) -> bool {
         match self {
-            Object::Integer(0) => false,
-            Object::Integer(_) => true,
-            Object::Bool(b) => *b,
-            Object::Null => false,
-            Object::Return(o) => o.is_truthy(),
+            Obj::Integer(0) => false,
+            Obj::Integer(_) => true,
+            Obj::Bool(b) => *b,
+            Obj::Null => false,
+            Obj::Return(o) => o.is_truthy(),
             _ => false,
         }
     }
 
     pub fn kind(&self) -> &'static str {
         match self {
-            Object::Integer(_) => "INTEGER",
-            Object::Bool(_) => "BOOL",
-            Object::String(_) => "STRING",
-            Object::Null => "NULL",
-            Object::Return(_) => "RETURN",
-            Object::Func(_) => "FUNCTION",
-            Object::Builtin(_) => "BUILTIN",
-            Object::Array(_) => "ARRAY",
-            Object::Hash(_) => "HASH",
+            Obj::Integer(_) => "INTEGER",
+            Obj::Bool(_) => "BOOL",
+            Obj::String(_) => "STRING",
+            Obj::Null => "NULL",
+            Obj::Return(_) => "RETURN",
+            Obj::Func(_) => "FUNCTION",
+            Obj::Builtin(_) => "BUILTIN",
+            Obj::Array(_) => "ARRAY",
+            Obj::Hash(_) => "HASH",
         }
     }
 }
 
-impl Hash for Object {
+impl Hash for Obj {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         match self {
-            Object::Integer(v) => v.hash(state),
-            Object::String(v) => v.hash(state),
-            Object::Bool(v) => v.hash(state),
+            Obj::Integer(v) => v.hash(state),
+            Obj::String(v) => v.hash(state),
+            Obj::Bool(v) => v.hash(state),
             _ => panic!("Cannot hash object of type {}", self.kind()),
         }
     }
 }
 
-impl Display for Object {
+impl Display for Obj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Object::Integer(x) => write!(f, "{}", x),
-            Object::Bool(x) => write!(f, "{}", x),
-            Object::String(s) => write!(f, "{}", s),
-            Object::Null => write!(f, "null"),
-            Object::Return(o) => write!(f, "{}", o),
-            Object::Func(o) => write!(f, "{}", o),
-            Object::Builtin(_) => write!(f, "builtin"),
-            Object::Array(a) => write!(f, "{}", a),
-            Object::Hash(h) => write!(f, "{}", h),
+            Obj::Integer(x) => write!(f, "{}", x),
+            Obj::Bool(x) => write!(f, "{}", x),
+            Obj::String(s) => write!(f, "{}", s),
+            Obj::Null => write!(f, "null"),
+            Obj::Return(o) => write!(f, "{}", o),
+            Obj::Func(o) => write!(f, "{}", o),
+            Obj::Builtin(_) => write!(f, "builtin"),
+            Obj::Array(a) => write!(f, "{}", a),
+            Obj::Hash(h) => write!(f, "{}", h),
         }
     }
 }
@@ -85,7 +85,7 @@ impl Display for FuncObj {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ArrayObj {
-    pub elements: Vec<Object>,
+    pub elements: Vec<Rc<Obj>>,
 }
 
 impl Display for ArrayObj {
@@ -104,7 +104,7 @@ impl Display for ArrayObj {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HashObj {
-    pub map: HashMap<Object, Object>,
+    pub map: HashMap<Rc<Obj>, Rc<Obj>>,
 }
 
 impl Display for HashObj {
