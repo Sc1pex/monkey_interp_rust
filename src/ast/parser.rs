@@ -132,8 +132,7 @@ impl Parser {
     }
 
     fn next(&mut self) {
-        self.cur_token = self.peek_token.clone();
-        self.peek_token = self.lexer.next();
+        self.cur_token = std::mem::replace(&mut self.peek_token, self.lexer.next());
     }
 
     fn cur_token_is(&self, ty: TokenType) -> bool {

@@ -7,7 +7,7 @@ use crate::{
 use builtin::Builtin;
 pub use env::Environment;
 use object::*;
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 mod builtin;
 mod env;
@@ -16,7 +16,7 @@ mod object;
 pub fn eval_program(prog: Program, env: &Rc<RefCell<Environment>>) -> EvalResult {
     let mut res = Rc::new(Obj::Null);
     for stmt in prog.statements {
-        res = eval_stmt(stmt, env)?;
+        res = eval_stmt(&stmt, env)?;
 
         if let Obj::Return(val) = &*res {
             return Ok(val.clone());
@@ -25,62 +25,62 @@ pub fn eval_program(prog: Program, env: &Rc<RefCell<Environment>>) -> EvalResult
     Ok(res)
 }
 
-fn eval_stmt(stmt: Statement, env: &Rc<RefCell<Environment>>) -> EvalResult {
+fn eval_stmt(stmt: &Statement, env: &Rc<RefCell<Environment>>) -> EvalResult {
     match stmt {
         Statement::Let(l) => {
-            let val = eval_expr(l.expr, env)?;
-            env.borrow_mut().set(l.ident, val);
+            let val = eval_expr(&l.expr, env)?;
+            env.borrow_mut().set(&l.ident, val);
             Ok(Rc::new(Obj::Null))
         }
         Statement::Return(r) => {
-            let val = eval_expr(r.expr, env)?;
+            let val = eval_expr(&r.expr, env)?;
             Ok(Rc::new(Obj::Return(val)))
         }
         Statement::Expression(e) => eval_expr(e, env),
     }
 }
 
-fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
+fn eval_expr(e: &Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
     match e {
         Expression::Ident(i) => eval_ident(i, env),
-        Expression::Number(x) => Ok(Rc::new(Obj::Integer(x))),
-        Expression::String(s) => Ok(Rc::new(Obj::String(s))),
+        Expression::Number(x) => Ok(Rc::new(Obj::Integer(*x))),
+        Expression::String(s) => Ok(Rc::new(Obj::String(s.into()))),
         Expression::Prefix(p) => {
-            let right = eval_expr(*p.right, env)?;
+            let right = eval_expr(&p.right, env)?;
             eval_prefix(p.operator, right)
         }
         Expression::Infix(i) => {
-            let left = eval_expr(*i.left, env)?;
-            let right = eval_expr(*i.right, env)?;
+            let left = eval_expr(&i.left, env)?;
+            let right = eval_expr(&i.right, env)?;
             eval_infix(left, i.operator, right)
         }
-        Expression::Bool(b) => Ok(Rc::new(Obj::Bool(b))),
+        Expression::Bool(b) => Ok(Rc::new(Obj::Bool(*b))),
         Expression::If(i) => {
-            let cond = eval_expr(*i.condition, env)?;
+            let cond = eval_expr(&i.condition, env)?;
 
             if cond.is_truthy() {
-                eval_block(i.if_branch, env)
+                eval_block(&i.if_branch, env)
             } else {
                 match i.else_branch {
-                    Some(b) => eval_block(b, env),
+                    Some(ref b) => eval_block(b, env),
                     None => Ok(Rc::new(Obj::Null)),
                 }
             }
         }
         Expression::Func(f) => Ok(Rc::new(Obj::Func(FuncObj {
-            expr: f,
+            expr: f.clone(),
             env: env.clone(),
         }))),
         Expression::Call(c) => {
-            let func = eval_expr(*c.func, env)?;
-            let args = eval_exprs(c.arguments, env)?;
+            let func = eval_expr(&c.func, env)?;
+            let args = eval_exprs(&c.arguments, env)?;
 
             apply_func(func, args)
         }
         Expression::Array(a) => eval_arr(a, env),
         Expression::Index(i) => {
-            let left = eval_expr(*i.left, env)?;
-            let index = eval_expr(*i.index, env)?;
+            let left = eval_expr(&i.left, env)?;
+            let index = eval_expr(&i.index, env)?;
 
             eval_index(left, index)
         }
@@ -88,38 +88,32 @@ fn eval_expr(e: Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
     }
 }
 
-fn eval_ident(ident: Ident, env: &Rc<RefCell<Environment>>) -> EvalResult {
-    if let Some(r) = env.borrow().get(&ident) {
+fn eval_ident(ident: &Ident, env: &Rc<RefCell<Environment>>) -> EvalResult {
+    if let Some(r) = env.borrow().get(ident) {
         Ok(r)
-    } else if let Some(b) = Builtin::from_ident(&ident) {
+    } else if let Some(b) = Builtin::from_ident(ident) {
         Ok(b)
     } else {
         Err(format!("identifier not found: {}", ident))
     }
 }
 
-fn eval_arr(a: ArrayExpr, env: &Rc<RefCell<Environment>>) -> EvalResult {
+fn eval_arr(a: &ArrayExpr, env: &Rc<RefCell<Environment>>) -> EvalResult {
     let elements = a
         .elements
-        .into_iter()
+        .iter()
         .map(|e| eval_expr(e, env))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(Rc::new(Obj::Array(ArrayObj { elements })))
 }
 
-fn eval_hash(h: HashExpr, env: &Rc<RefCell<Environment>>) -> EvalResult {
-    let keys = h
+fn eval_hash(h: &HashExpr, env: &Rc<RefCell<Environment>>) -> EvalResult {
+    let map = h
         .pairs
-        .clone()
-        .into_iter()
-        .map(|(k, _)| eval_expr(k, env))
-        .collect::<Result<Vec<_>, _>>()?;
-    let values = h
-        .pairs
-        .into_iter()
-        .map(|(_, v)| eval_expr(v, env))
-        .collect::<Result<Vec<_>, _>>()?;
-    let map = keys.into_iter().zip(values.into_iter()).collect();
+        .iter()
+        .map(|(k, v)| (eval_expr(k, env), eval_expr(v, env)))
+        .map(|(r1, r2)| r1.map(|r1| r2.map(|r2| (r1, r2))))
+        .collect::<Result<Result<HashMap<_, _>, _>, _>>()??;
 
     Ok(Rc::new(Obj::Hash(HashObj { map })))
 }
@@ -142,14 +136,11 @@ fn eval_index(left: Rc<Obj>, index: Rc<Obj>) -> EvalResult {
     }
 }
 
-fn eval_exprs(
-    expr: Vec<Expression>,
-    env: &Rc<RefCell<Environment>>,
-) -> Result<Vec<Rc<Obj>>, String> {
-    expr.into_iter().map(|e| eval_expr(e, env)).collect()
+fn eval_exprs(expr: &[Expression], env: &Rc<RefCell<Environment>>) -> Result<Vec<Rc<Obj>>, String> {
+    expr.iter().map(|e| eval_expr(e, env)).collect()
 }
 
-fn eval_block(block: Vec<Statement>, env: &Rc<RefCell<Environment>>) -> EvalResult {
+fn eval_block(block: &[Statement], env: &Rc<RefCell<Environment>>) -> EvalResult {
     let mut res = Rc::new(Obj::Null);
     for stmt in block {
         res = eval_stmt(stmt, env)?;
@@ -244,9 +235,9 @@ fn apply_func(func: Rc<Obj>, args: Vec<Rc<Obj>>) -> EvalResult {
     }
 
     for (arg, param) in args.iter().zip(func.expr.params.iter()) {
-        env.borrow_mut().set(param.into(), arg.clone())
+        env.borrow_mut().set(param, arg.clone())
     }
-    let res = eval_block(func.expr.body.clone(), &env)?;
+    let res = eval_block(&func.expr.body, &env)?;
 
     match &*res {
         Obj::Return(r) => Ok(r.clone()),
