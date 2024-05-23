@@ -24,7 +24,9 @@ let sum = fn(arr) {
     reduce(arr, 0, fn (initial, el) { initial + el; });
 }
 
-let a = [1, 2, 3, 4, 6];
-map(a, fn (x) {x * x});
+let main = fn() {
+    let a = [1, 2, 3, 4];
+    puts(map(a, fn(x) {x * x - 3}));
+}
 
-sum(a);
+main()
