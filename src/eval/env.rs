@@ -1,10 +1,10 @@
-use super::Obj;
+use super::Object;
 use crate::ast::Ident;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Environment {
-    store: HashMap<Ident, Rc<Obj>>,
+    store: HashMap<Ident, Rc<Object>>,
     outer: Option<Rc<RefCell<Environment>>>,
 }
 
@@ -23,7 +23,7 @@ impl Environment {
         }
     }
 
-    pub fn get(&self, name: &Ident) -> Option<Rc<Obj>> {
+    pub fn get(&self, name: &Ident) -> Option<Rc<Object>> {
         match self.store.get(name) {
             Some(obj) => Some(obj.clone()),
             None => {
@@ -36,7 +36,7 @@ impl Environment {
         }
     }
 
-    pub fn set(&mut self, name: &Ident, value: Rc<Obj>) {
+    pub fn set(&mut self, name: &Ident, value: Rc<Object>) {
         self.store.insert(name.into(), value);
     }
 }

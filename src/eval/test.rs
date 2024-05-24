@@ -12,28 +12,28 @@ macro_rules! test {
 #[test]
 fn eval_int() {
     test!(
-        ("5", Ok(Rc::new(Obj::Integer(5)))),
-        ("20", Ok(Rc::new(Obj::Integer(20)))),
-        ("-5", Ok(Rc::new(Obj::Integer(-5)))),
-        ("-20", Ok(Rc::new(Obj::Integer(-20)))),
+        ("5", Ok(Rc::new(Object::Integer(5)))),
+        ("20", Ok(Rc::new(Object::Integer(20)))),
+        ("-5", Ok(Rc::new(Object::Integer(-5)))),
+        ("-20", Ok(Rc::new(Object::Integer(-20)))),
     );
 }
 
 #[test]
 fn eval_bool() {
     test!(
-        ("true", Ok(Rc::new(Obj::Bool(true)))),
-        ("false", Ok(Rc::new(Obj::Bool(false))))
+        ("true", Ok(Rc::new(Object::Bool(true)))),
+        ("false", Ok(Rc::new(Object::Bool(false))))
     );
 }
 
 #[test]
 fn eval_string() {
     test!(
-        ("\"foobar\"", Ok(Rc::new(Obj::String("foobar".into())))),
+        ("\"foobar\"", Ok(Rc::new(Object::String("foobar".into())))),
         (
             r#""hello" + " " + "world" "#,
-            Ok(Rc::new(Obj::String("hello world".into())))
+            Ok(Rc::new(Object::String("hello world".into())))
         ),
     );
 }
@@ -41,31 +41,31 @@ fn eval_string() {
 #[test]
 fn eval_bang() {
     test!(
-        ("!true", Ok(Rc::new(Obj::Bool(false)))),
-        ("!false", Ok(Rc::new(Obj::Bool(true)))),
-        ("!5", Ok(Rc::new(Obj::Bool(false)))),
-        ("!!true", Ok(Rc::new(Obj::Bool(true)))),
-        ("!!false", Ok(Rc::new(Obj::Bool(false)))),
-        ("!!5", Ok(Rc::new(Obj::Bool(true)))),
+        ("!true", Ok(Rc::new(Object::Bool(false)))),
+        ("!false", Ok(Rc::new(Object::Bool(true)))),
+        ("!5", Ok(Rc::new(Object::Bool(false)))),
+        ("!!true", Ok(Rc::new(Object::Bool(true)))),
+        ("!!false", Ok(Rc::new(Object::Bool(false)))),
+        ("!!5", Ok(Rc::new(Object::Bool(true)))),
     )
 }
 
 #[test]
 fn eval_math() {
     test!(
-        ("5 + 5 + 5 + 5 - 10", Ok(Rc::new(Obj::Integer(10)))),
-        ("2 * 2 * 2 * 2 * 2", Ok(Rc::new(Obj::Integer(32)))),
-        ("-50 + 100 + -50", Ok(Rc::new(Obj::Integer(0)))),
-        ("5 * 2 + 10", Ok(Rc::new(Obj::Integer(20)))),
-        ("5 + 2 * 10", Ok(Rc::new(Obj::Integer(25)))),
-        ("20 + 2 * -10", Ok(Rc::new(Obj::Integer(0)))),
-        ("50 / 2 * 2 + 10", Ok(Rc::new(Obj::Integer(60)))),
-        ("2 * (5 + 10)", Ok(Rc::new(Obj::Integer(30)))),
-        ("3 * 3 * 3 + 10", Ok(Rc::new(Obj::Integer(37)))),
-        ("3 * (3 * 3) + 10", Ok(Rc::new(Obj::Integer(37)))),
+        ("5 + 5 + 5 + 5 - 10", Ok(Rc::new(Object::Integer(10)))),
+        ("2 * 2 * 2 * 2 * 2", Ok(Rc::new(Object::Integer(32)))),
+        ("-50 + 100 + -50", Ok(Rc::new(Object::Integer(0)))),
+        ("5 * 2 + 10", Ok(Rc::new(Object::Integer(20)))),
+        ("5 + 2 * 10", Ok(Rc::new(Object::Integer(25)))),
+        ("20 + 2 * -10", Ok(Rc::new(Object::Integer(0)))),
+        ("50 / 2 * 2 + 10", Ok(Rc::new(Object::Integer(60)))),
+        ("2 * (5 + 10)", Ok(Rc::new(Object::Integer(30)))),
+        ("3 * 3 * 3 + 10", Ok(Rc::new(Object::Integer(37)))),
+        ("3 * (3 * 3) + 10", Ok(Rc::new(Object::Integer(37)))),
         (
             "(5 + 10 * 2 + 15 / 3) * 2 + -10",
-            Ok(Rc::new(Obj::Integer(50)))
+            Ok(Rc::new(Object::Integer(50)))
         ),
     )
 }
@@ -73,31 +73,31 @@ fn eval_math() {
 #[test]
 fn eval_comare() {
     test!(
-        ("1 < 2", Ok(Rc::new(Obj::Bool(true)))),
-        ("1 > 2", Ok(Rc::new(Obj::Bool(false)))),
-        ("1 < 1", Ok(Rc::new(Obj::Bool(false)))),
-        ("1 > 1", Ok(Rc::new(Obj::Bool(false)))),
-        ("1 == 1", Ok(Rc::new(Obj::Bool(true)))),
-        ("1 != 1", Ok(Rc::new(Obj::Bool(false)))),
-        ("1 == 2", Ok(Rc::new(Obj::Bool(false)))),
-        ("1 != 2", Ok(Rc::new(Obj::Bool(true)))),
-        ("true == true", Ok(Rc::new(Obj::Bool(true)))),
-        ("false == false", Ok(Rc::new(Obj::Bool(true)))),
-        ("true == false", Ok(Rc::new(Obj::Bool(false)))),
-        ("true != false", Ok(Rc::new(Obj::Bool(true)))),
-        ("false != true", Ok(Rc::new(Obj::Bool(true)))),
-        ("(1 < 2) == true", Ok(Rc::new(Obj::Bool(true)))),
-        ("(1 < 2) == false", Ok(Rc::new(Obj::Bool(false)))),
-        ("(1 > 2) == true", Ok(Rc::new(Obj::Bool(false)))),
-        ("(1 > 2) == false", Ok(Rc::new(Obj::Bool(true)))),
-        (r#" "hello" == "hello" "#, Ok(Rc::new(Obj::Bool(true)))),
+        ("1 < 2", Ok(Rc::new(Object::Bool(true)))),
+        ("1 > 2", Ok(Rc::new(Object::Bool(false)))),
+        ("1 < 1", Ok(Rc::new(Object::Bool(false)))),
+        ("1 > 1", Ok(Rc::new(Object::Bool(false)))),
+        ("1 == 1", Ok(Rc::new(Object::Bool(true)))),
+        ("1 != 1", Ok(Rc::new(Object::Bool(false)))),
+        ("1 == 2", Ok(Rc::new(Object::Bool(false)))),
+        ("1 != 2", Ok(Rc::new(Object::Bool(true)))),
+        ("true == true", Ok(Rc::new(Object::Bool(true)))),
+        ("false == false", Ok(Rc::new(Object::Bool(true)))),
+        ("true == false", Ok(Rc::new(Object::Bool(false)))),
+        ("true != false", Ok(Rc::new(Object::Bool(true)))),
+        ("false != true", Ok(Rc::new(Object::Bool(true)))),
+        ("(1 < 2) == true", Ok(Rc::new(Object::Bool(true)))),
+        ("(1 < 2) == false", Ok(Rc::new(Object::Bool(false)))),
+        ("(1 > 2) == true", Ok(Rc::new(Object::Bool(false)))),
+        ("(1 > 2) == false", Ok(Rc::new(Object::Bool(true)))),
+        (r#" "hello" == "hello" "#, Ok(Rc::new(Object::Bool(true)))),
         (
             r#" "lorem ipsum" == "good placeholder" "#,
-            Ok(Rc::new(Obj::Bool(false)))
+            Ok(Rc::new(Object::Bool(false)))
         ),
         (
             r#" "lorem ipsum" != "good placeholder" "#,
-            Ok(Rc::new(Obj::Bool(true)))
+            Ok(Rc::new(Object::Bool(true)))
         )
     )
 }
@@ -105,30 +105,33 @@ fn eval_comare() {
 #[test]
 fn eval_if() {
     test!(
-        ("if (true) { 10 }", Ok(Rc::new(Obj::Integer(10)))),
-        ("if (false) { 10 }", Ok(Rc::new(Obj::Null))),
-        ("if (1) { 10 }", Ok(Rc::new(Obj::Integer(10)))),
-        ("if (1 < 2) { 10 }", Ok(Rc::new(Obj::Integer(10)))),
-        ("if (1 > 2) { 10 }", Ok(Rc::new(Obj::Null))),
+        ("if (true) { 10 }", Ok(Rc::new(Object::Integer(10)))),
+        ("if (false) { 10 }", Ok(Rc::new(Object::Null))),
+        ("if (1) { 10 }", Ok(Rc::new(Object::Integer(10)))),
+        ("if (1 < 2) { 10 }", Ok(Rc::new(Object::Integer(10)))),
+        ("if (1 > 2) { 10 }", Ok(Rc::new(Object::Null))),
         (
             "if (1 > 2) { 10 } else { 20 }",
-            Ok(Rc::new(Obj::Integer(20)))
+            Ok(Rc::new(Object::Integer(20)))
         ),
         (
             "if (1 < 2) { 10 } else { 20 }",
-            Ok(Rc::new(Obj::Integer(10)))
+            Ok(Rc::new(Object::Integer(10)))
         ),
-        ("if (0) { 10 } else { 20 }", Ok(Rc::new(Obj::Integer(20)))),
+        (
+            "if (0) { 10 } else { 20 }",
+            Ok(Rc::new(Object::Integer(20)))
+        ),
     )
 }
 
 #[test]
 fn eval_return() {
     test!(
-        ("return 10;", Ok(Rc::new(Obj::Integer(10)))),
-        ("return 10; 9;", Ok(Rc::new(Obj::Integer(10)))),
-        ("return 2 * 5; 9;", Ok(Rc::new(Obj::Integer(10)))),
-        ("9; return 2 * 5; 9;", Ok(Rc::new(Obj::Integer(10)))),
+        ("return 10;", Ok(Rc::new(Object::Integer(10)))),
+        ("return 10; 9;", Ok(Rc::new(Object::Integer(10)))),
+        ("return 2 * 5; 9;", Ok(Rc::new(Object::Integer(10)))),
+        ("9; return 2 * 5; 9;", Ok(Rc::new(Object::Integer(10)))),
         (
             r#"if (10 > 1) {
                 if (10 > 1) {
@@ -136,7 +139,7 @@ fn eval_return() {
                 }
                 return 1;
             }"#,
-            Ok(Rc::new(Obj::Integer(10)))
+            Ok(Rc::new(Object::Integer(10)))
         )
     )
 }
@@ -180,12 +183,12 @@ fn error_handling() {
 #[test]
 fn eval_let() {
     test!(
-        ("let a = 5; a;", Ok(Rc::new(Obj::Integer(5)))),
-        ("let a = 5 * 5; a;", Ok(Rc::new(Obj::Integer(25)))),
-        ("let a = 5; let b = a; b;", Ok(Rc::new(Obj::Integer(5)))),
+        ("let a = 5; a;", Ok(Rc::new(Object::Integer(5)))),
+        ("let a = 5 * 5; a;", Ok(Rc::new(Object::Integer(25)))),
+        ("let a = 5; let b = a; b;", Ok(Rc::new(Object::Integer(5)))),
         (
             "let a = 5; let b = a; let c = a + b + 5; c;",
-            Ok(Rc::new(Obj::Integer(15)))
+            Ok(Rc::new(Object::Integer(15)))
         ),
     )
 }
@@ -195,28 +198,28 @@ fn eval_func() {
     test!(
         (
             "let identity = fn(x) { x; }; identity(5);",
-            Ok(Rc::new(Obj::Integer(5)))
+            Ok(Rc::new(Object::Integer(5)))
         ),
         (
             "let identity = fn(x) { return x; }; identity(5);",
-            Ok(Rc::new(Obj::Integer(5)))
+            Ok(Rc::new(Object::Integer(5)))
         ),
         (
             "let double = fn(x) { x * 2; }; double(5);",
-            Ok(Rc::new(Obj::Integer(10)))
+            Ok(Rc::new(Object::Integer(10)))
         ),
         (
             "let add = fn(x, y) { x + y; }; add(5, 5);",
-            Ok(Rc::new(Obj::Integer(10)))
+            Ok(Rc::new(Object::Integer(10)))
         ),
         (
             "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));",
-            Ok(Rc::new(Obj::Integer(20)))
+            Ok(Rc::new(Object::Integer(20)))
         ),
-        ("fn(x) { x; }(5)", Ok(Rc::new(Obj::Integer(5)))),
+        ("fn(x) { x; }(5)", Ok(Rc::new(Object::Integer(5)))),
         (
             "let fact = fn(n) { if (n == 0) { 1 } else { n * fact(n - 1)} }; fact(5)",
-            Ok(Rc::new(Obj::Integer(120)))
+            Ok(Rc::new(Object::Integer(120)))
         )
     )
 }
@@ -225,11 +228,11 @@ fn eval_func() {
 fn array_literal() {
     test!((
         "[1, 2 * 2, 3 + 3]",
-        Ok(Rc::new(Obj::Array(ArrayObj {
+        Ok(Rc::new(Object::Array(ArrayObj {
             elements: vec![
-                Rc::new(Obj::Integer(1)),
-                Rc::new(Obj::Integer(4)),
-                Rc::new(Obj::Integer(6))
+                Rc::new(Object::Integer(1)),
+                Rc::new(Object::Integer(4)),
+                Rc::new(Object::Integer(6))
             ]
         })))
     ))
@@ -238,25 +241,25 @@ fn array_literal() {
 #[test]
 fn index_arr() {
     test!(
-        ("[1, 2, 3][0]", Ok(Rc::new(Obj::Integer(1)))),
-        ("[1, 2, 3][1]", Ok(Rc::new(Obj::Integer(2)))),
-        ("[1, 2, 3][2]", Ok(Rc::new(Obj::Integer(3)))),
-        ("let i = 0; [1][i];", Ok(Rc::new(Obj::Integer(1)))),
-        ("[1, 2, 3][1 + 1];", Ok(Rc::new(Obj::Integer(3)))),
+        ("[1, 2, 3][0]", Ok(Rc::new(Object::Integer(1)))),
+        ("[1, 2, 3][1]", Ok(Rc::new(Object::Integer(2)))),
+        ("[1, 2, 3][2]", Ok(Rc::new(Object::Integer(3)))),
+        ("let i = 0; [1][i];", Ok(Rc::new(Object::Integer(1)))),
+        ("[1, 2, 3][1 + 1];", Ok(Rc::new(Object::Integer(3)))),
         (
             "let myArray = [1, 2, 3]; myArray[2];",
-            Ok(Rc::new(Obj::Integer(3)))
+            Ok(Rc::new(Object::Integer(3)))
         ),
         (
             "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
-            Ok(Rc::new(Obj::Integer(6)))
+            Ok(Rc::new(Object::Integer(6)))
         ),
         (
             "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
-            Ok(Rc::new(Obj::Integer(2)))
+            Ok(Rc::new(Object::Integer(2)))
         ),
-        ("[1, 2, 3][3]", Ok(Rc::new(Obj::Null))),
-        ("[1, 2, 3][-1]", Ok(Rc::new(Obj::Null))),
+        ("[1, 2, 3][3]", Ok(Rc::new(Object::Null))),
+        ("[1, 2, 3][-1]", Ok(Rc::new(Object::Null))),
     )
 }
 
@@ -274,17 +277,23 @@ fn hash_literal() {
         false: 6
     }
     "#,
-        Ok(Rc::new(Obj::Hash(HashObj {
+        Ok(Rc::new(Object::Hash(HashObj {
             map: HashMap::from([
-                (Rc::new(Obj::String("one".into())), Rc::new(Obj::Integer(1))),
-                (Rc::new(Obj::String("two".into())), Rc::new(Obj::Integer(2))),
                 (
-                    Rc::new(Obj::String("three".into())),
-                    Rc::new(Obj::Integer(3))
+                    Rc::new(Object::String("one".into())),
+                    Rc::new(Object::Integer(1))
                 ),
-                (Rc::new(Obj::Integer(4)), Rc::new(Obj::Integer(4))),
-                (Rc::new(Obj::Bool(true)), Rc::new(Obj::Integer(5))),
-                (Rc::new(Obj::Bool(false)), Rc::new(Obj::Integer(6))),
+                (
+                    Rc::new(Object::String("two".into())),
+                    Rc::new(Object::Integer(2))
+                ),
+                (
+                    Rc::new(Object::String("three".into())),
+                    Rc::new(Object::Integer(3))
+                ),
+                (Rc::new(Object::Integer(4)), Rc::new(Object::Integer(4))),
+                (Rc::new(Object::Bool(true)), Rc::new(Object::Integer(5))),
+                (Rc::new(Object::Bool(false)), Rc::new(Object::Integer(6))),
             ])
         })))
     ))
@@ -293,25 +302,25 @@ fn hash_literal() {
 #[test]
 fn index_hash() {
     test!(
-        (r#"{"foo": 5}["foo"]"#, Ok(Rc::new(Obj::Integer(5)))),
-        (r#"{"foo": 5}["bar"]"#, Ok(Rc::new(Obj::Null))),
+        (r#"{"foo": 5}["foo"]"#, Ok(Rc::new(Object::Integer(5)))),
+        (r#"{"foo": 5}["bar"]"#, Ok(Rc::new(Object::Null))),
         (
             r#"let key = "foo"; {"foo": 5}[key]"#,
-            Ok(Rc::new(Obj::Integer(5)))
+            Ok(Rc::new(Object::Integer(5)))
         ),
-        (r#"{}["foo"]"#, Ok(Rc::new(Obj::Null))),
-        (r#"{5: 5}[5]"#, Ok(Rc::new(Obj::Integer(5)))),
-        (r#"{true: 5}[true]"#, Ok(Rc::new(Obj::Integer(5)))),
-        (r#"{false: 5}[false]"#, Ok(Rc::new(Obj::Integer(5)))),
+        (r#"{}["foo"]"#, Ok(Rc::new(Object::Null))),
+        (r#"{5: 5}[5]"#, Ok(Rc::new(Object::Integer(5)))),
+        (r#"{true: 5}[true]"#, Ok(Rc::new(Object::Integer(5)))),
+        (r#"{false: 5}[false]"#, Ok(Rc::new(Object::Integer(5)))),
     )
 }
 
 #[test]
 fn builtin_len() {
     test!(
-        (r#"len("")"#, Ok(Rc::new(Obj::Integer(0)))),
-        (r#"len("four")"#, Ok(Rc::new(Obj::Integer(4)))),
-        (r#"len("hello world")"#, Ok(Rc::new(Obj::Integer(11)))),
+        (r#"len("")"#, Ok(Rc::new(Object::Integer(0)))),
+        (r#"len("four")"#, Ok(Rc::new(Object::Integer(4)))),
+        (r#"len("hello world")"#, Ok(Rc::new(Object::Integer(11)))),
         (
             r#"len(1)"#,
             Err("argument to `len` not supported, got INTEGER".into())
@@ -320,15 +329,18 @@ fn builtin_len() {
             r#"len("one", "two")"#,
             Err("wrong number of arguments. got=2, want=1".into())
         ),
-        (r#"len([1, 2, 3, 4])"#, Ok(Rc::new(Obj::Integer(4)))),
+        (r#"len([1, 2, 3, 4])"#, Ok(Rc::new(Object::Integer(4)))),
     )
 }
 
 #[test]
 fn builtin_first() {
     test!(
-        (r#"first(["a", "b"])"#, Ok(Rc::new(Obj::String("a".into())))),
-        (r#"first([])"#, Ok(Rc::new(Obj::Null))),
+        (
+            r#"first(["a", "b"])"#,
+            Ok(Rc::new(Object::String("a".into())))
+        ),
+        (r#"first([])"#, Ok(Rc::new(Object::Null))),
         (
             r#"first(1)"#,
             Err("argument to `first` not supported, got INTEGER".into())
@@ -343,8 +355,11 @@ fn builtin_first() {
 #[test]
 fn builtin_last() {
     test!(
-        (r#"last(["a", "b"])"#, Ok(Rc::new(Obj::String("b".into())))),
-        (r#"last([])"#, Ok(Rc::new(Obj::Null))),
+        (
+            r#"last(["a", "b"])"#,
+            Ok(Rc::new(Object::String("b".into())))
+        ),
+        (r#"last([])"#, Ok(Rc::new(Object::Null))),
         (
             r#"last(1)"#,
             Err("argument to `last` not supported, got INTEGER".into())
@@ -361,20 +376,20 @@ fn builtin_rest() {
     test!(
         (
             r#"rest(["a", "b", "c"])"#,
-            Ok(Rc::new(Obj::Array(ArrayObj {
+            Ok(Rc::new(Object::Array(ArrayObj {
                 elements: vec![
-                    Rc::new(Obj::String("b".into())),
-                    Rc::new(Obj::String("c".into()))
+                    Rc::new(Object::String("b".into())),
+                    Rc::new(Object::String("c".into()))
                 ]
             })))
         ),
         (
             r#"rest(["a"])"#,
-            Ok(Rc::new(Obj::Array(ArrayObj { elements: vec![] })))
+            Ok(Rc::new(Object::Array(ArrayObj { elements: vec![] })))
         ),
         (
             r#"rest([])"#,
-            Ok(Rc::new(Obj::Array(ArrayObj { elements: vec![] })))
+            Ok(Rc::new(Object::Array(ArrayObj { elements: vec![] })))
         ),
         (
             r#"rest(1)"#,
@@ -392,35 +407,38 @@ fn builtin_push() {
     test!(
         (
             r#"push(["a", "b"], "c")"#,
-            Ok(Rc::new(Obj::Array(ArrayObj {
+            Ok(Rc::new(Object::Array(ArrayObj {
                 elements: vec![
-                    Rc::new(Obj::String("a".into())),
-                    Rc::new(Obj::String("b".into())),
-                    Rc::new(Obj::String("c".into()))
+                    Rc::new(Object::String("a".into())),
+                    Rc::new(Object::String("b".into())),
+                    Rc::new(Object::String("c".into()))
                 ]
             })))
         ),
         (
             r#"push(["a"], 1)"#,
-            Ok(Rc::new(Obj::Array(ArrayObj {
-                elements: vec![Rc::new(Obj::String("a".into())), Rc::new(Obj::Integer(1))]
+            Ok(Rc::new(Object::Array(ArrayObj {
+                elements: vec![
+                    Rc::new(Object::String("a".into())),
+                    Rc::new(Object::Integer(1))
+                ]
             })))
         ),
         (
             r#"push(["a"], [1])"#,
-            Ok(Rc::new(Obj::Array(ArrayObj {
+            Ok(Rc::new(Object::Array(ArrayObj {
                 elements: vec![
-                    Rc::new(Obj::String("a".into())),
-                    Rc::new(Obj::Array(ArrayObj {
-                        elements: vec![Rc::new(Obj::Integer(1))]
+                    Rc::new(Object::String("a".into())),
+                    Rc::new(Object::Array(ArrayObj {
+                        elements: vec![Rc::new(Object::Integer(1))]
                     }))
                 ]
             })))
         ),
         (
             r#"push([], "bar")"#,
-            Ok(Rc::new(Obj::Array(ArrayObj {
-                elements: vec![Rc::new(Obj::String("bar".into()))]
+            Ok(Rc::new(Object::Array(ArrayObj {
+                elements: vec![Rc::new(Object::String("bar".into()))]
             })))
         ),
         (
