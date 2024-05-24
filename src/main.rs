@@ -3,6 +3,7 @@ use eval::{eval_program, Environment};
 use lexer::Lexer;
 
 mod ast;
+mod compiler;
 mod eval;
 mod lexer;
 mod repl;
