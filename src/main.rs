@@ -7,6 +7,7 @@ mod compiler;
 mod eval;
 mod lexer;
 mod repl;
+mod vm;
 
 fn main() {
     let mut args = std::env::args().skip(1);
