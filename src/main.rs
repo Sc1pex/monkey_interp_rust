@@ -1,3 +1,5 @@
+#![feature(variant_count)]
+
 use ast::Parser;
 use eval::{eval_program, Environment};
 use lexer::Lexer;

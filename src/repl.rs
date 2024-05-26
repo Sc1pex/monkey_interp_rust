@@ -33,5 +33,5 @@ fn run() -> Result<Object, String> {
     let mut vm = Vm::new(comp.bytecode());
     vm.run()?;
 
-    Ok(vm.stack_top().unwrap_or(&Object::Null).clone())
+    Ok(vm.last_popped().clone())
 }

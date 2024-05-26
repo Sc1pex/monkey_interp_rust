@@ -41,7 +41,11 @@ impl Compiler {
         match stmt {
             Statement::Let(_) => todo!(),
             Statement::Return(_) => todo!(),
-            Statement::Expression(e) => self.compile_expr(e),
+            Statement::Expression(e) => {
+                self.compile_expr(e)?;
+                self.emit(Instruction::new(OpCode::Pop, &[]));
+                Ok(())
+            }
         }
     }
 
@@ -61,6 +65,9 @@ impl Compiler {
 
                 match i.operator {
                     TokenType::Plus => self.emit(Instruction::new(OpCode::Add, &[])),
+                    TokenType::Minus => self.emit(Instruction::new(OpCode::Sub, &[])),
+                    TokenType::Star => self.emit(Instruction::new(OpCode::Mul, &[])),
+                    TokenType::Slash => self.emit(Instruction::new(OpCode::Div, &[])),
                     _ => return Err(format!("unknown operator: {}", i.operator)),
                 };
             }

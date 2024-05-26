@@ -40,17 +40,11 @@ impl Vm {
                     self.push(self.constants[const_idx as usize].clone())?;
                     ip += 2;
                 }
-                OpCode::Add => {
-                    let right = self.pop();
-                    let left = self.pop();
-
-                    match (&left, &right) {
-                        (Object::Integer(left), Object::Integer(right)) => {
-                            self.push(Object::Integer(left + right))?
-                        }
-                        _ => return Err(format!("unknown operation: {} + {}", left, right)),
-                    }
+                OpCode::Add | OpCode::Sub | OpCode::Mul | OpCode::Div => self.execute_bin_op(op)?,
+                OpCode::Pop => {
+                    self.pop();
                 }
+                _ => todo!(),
             }
         }
 
@@ -63,6 +57,10 @@ impl Vm {
         } else {
             Some(&self.stack[self.sp - 1])
         }
+    }
+
+    pub fn last_popped(&self) -> &Object {
+        &self.stack[self.sp]
     }
 }
 
@@ -81,6 +79,22 @@ impl Vm {
         let obj = self.stack[self.sp - 1].clone();
         self.sp -= 1;
         obj
+    }
+
+    fn execute_bin_op(&mut self, op: OpCode) -> RunResult {
+        let right = self.pop();
+        let left = self.pop();
+
+        match (&left, &right) {
+            (Object::Integer(left), Object::Integer(right)) => match op {
+                OpCode::Add => self.push(Object::Integer(left + right)),
+                OpCode::Sub => self.push(Object::Integer(left - right)),
+                OpCode::Mul => self.push(Object::Integer(left * right)),
+                OpCode::Div => self.push(Object::Integer(left / right)),
+                _ => unreachable!(),
+            },
+            _ => Err(format!("unknown operation: {} + {}", left, right)),
+        }
     }
 }
 

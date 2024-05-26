@@ -4,6 +4,10 @@ use super::code::{Bytes, BytesWrite};
 pub enum OpCode {
     Constant,
     Add,
+    Pop,
+    Sub,
+    Mul,
+    Div,
 }
 
 impl OpCode {
@@ -11,13 +15,17 @@ impl OpCode {
         match self {
             OpCode::Constant => Definition::new("OpConstant", &[2]),
             OpCode::Add => Definition::new("OpAdd", &[]),
+            OpCode::Pop => Definition::new("OpPop", &[]),
+            OpCode::Sub => Definition::new("OpSub", &[]),
+            OpCode::Mul => Definition::new("OpMul", &[]),
+            OpCode::Div => Definition::new("OpDiv", &[]),
         }
     }
 }
 
 impl From<u8> for OpCode {
     fn from(value: u8) -> Self {
-        if value > 1 {
+        if value > std::mem::variant_count::<Self>() as u8 {
             panic!("Invalid opcode: {}", value);
         } else {
             unsafe { std::mem::transmute(value) }
@@ -59,6 +67,11 @@ impl<'a> Instruction<'a> {
 }
 
 impl<'a> BytesWrite for Instruction<'a> {
+    fn write(&self, b: &mut Bytes) {
+        (&self).write(b)
+    }
+}
+impl<'a> BytesWrite for &Instruction<'a> {
     fn write(&self, b: &mut Bytes) {
         let def = self.op.def();
 
