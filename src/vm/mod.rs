@@ -79,6 +79,7 @@ impl Vm {
 
     fn pop(&mut self) -> Object {
         let obj = self.stack[self.sp - 1].clone();
+        self.sp -= 1;
         obj
     }
 }
