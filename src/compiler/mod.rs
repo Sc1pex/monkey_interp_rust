@@ -59,19 +59,13 @@ impl Compiler {
             }
             Expression::String(_) => todo!(),
             Expression::Prefix(_) => todo!(),
-            Expression::Infix(i) => {
-                self.compile_expr(*i.left)?;
-                self.compile_expr(*i.right)?;
-
-                match i.operator {
-                    TokenType::Plus => self.emit(Instruction::new(OpCode::Add, &[])),
-                    TokenType::Minus => self.emit(Instruction::new(OpCode::Sub, &[])),
-                    TokenType::Star => self.emit(Instruction::new(OpCode::Mul, &[])),
-                    TokenType::Slash => self.emit(Instruction::new(OpCode::Div, &[])),
-                    _ => return Err(format!("unknown operator: {}", i.operator)),
+            Expression::Infix(i) => self.compile_infix(i)?,
+            Expression::Bool(b) => {
+                match b {
+                    true => self.emit(Instruction::new(OpCode::True, &[])),
+                    false => self.emit(Instruction::new(OpCode::False, &[])),
                 };
             }
-            Expression::Bool(_) => todo!(),
             Expression::If(_) => todo!(),
             Expression::Func(_) => todo!(),
             Expression::Call(_) => todo!(),
@@ -94,6 +88,41 @@ impl Compiler {
         let pos = self.instructions.len();
         self.instructions.push(i);
         pos
+    }
+
+    fn compile_infix(&mut self, i: InfixExpr) -> CompileResult {
+        match i.operator {
+            TokenType::Lt => self.compile_infix_rev(i),
+            _ => self.compile_infix_normal(i),
+        }
+    }
+
+    fn compile_infix_normal(&mut self, i: InfixExpr) -> CompileResult {
+        self.compile_expr(*i.left)?;
+        self.compile_expr(*i.right)?;
+
+        match i.operator {
+            TokenType::Plus => self.emit(Instruction::new(OpCode::Add, &[])),
+            TokenType::Minus => self.emit(Instruction::new(OpCode::Sub, &[])),
+            TokenType::Star => self.emit(Instruction::new(OpCode::Mul, &[])),
+            TokenType::Slash => self.emit(Instruction::new(OpCode::Div, &[])),
+            TokenType::Gt => self.emit(Instruction::new(OpCode::Greater, &[])),
+            TokenType::Eq => self.emit(Instruction::new(OpCode::Eq, &[])),
+            TokenType::NotEq => self.emit(Instruction::new(OpCode::NotEq, &[])),
+            _ => unreachable!(),
+        };
+        Ok(())
+    }
+
+    fn compile_infix_rev(&mut self, i: InfixExpr) -> CompileResult {
+        self.compile_expr(*i.right)?;
+        self.compile_expr(*i.left)?;
+
+        match i.operator {
+            TokenType::Lt => self.emit(Instruction::new(OpCode::Greater, &[])),
+            _ => unreachable!(),
+        };
+        Ok(())
     }
 }
 

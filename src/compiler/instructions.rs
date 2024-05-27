@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::code::{Bytes, BytesWrite};
 
 #[derive(Debug, Clone, Copy)]
@@ -8,6 +10,11 @@ pub enum OpCode {
     Sub,
     Mul,
     Div,
+    True,
+    False,
+    Eq,
+    NotEq,
+    Greater,
 }
 
 impl OpCode {
@@ -19,7 +26,18 @@ impl OpCode {
             OpCode::Sub => Definition::new("OpSub", &[]),
             OpCode::Mul => Definition::new("OpMul", &[]),
             OpCode::Div => Definition::new("OpDiv", &[]),
+            OpCode::True => Definition::new("OpTrue", &[]),
+            OpCode::False => Definition::new("OpFalse", &[]),
+            OpCode::Eq => Definition::new("OpEq", &[]),
+            OpCode::NotEq => Definition::new("OpNotEq", &[]),
+            OpCode::Greater => Definition::new("OpGreater", &[]),
         }
+    }
+}
+
+impl Display for OpCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.def().name)
     }
 }
 

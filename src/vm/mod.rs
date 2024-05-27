@@ -40,10 +40,18 @@ impl Vm {
                     self.push(self.constants[const_idx as usize].clone())?;
                     ip += 2;
                 }
-                OpCode::Add | OpCode::Sub | OpCode::Mul | OpCode::Div => self.execute_bin_op(op)?,
+                OpCode::Add
+                | OpCode::Sub
+                | OpCode::Mul
+                | OpCode::Div
+                | OpCode::Greater
+                | OpCode::Eq
+                | OpCode::NotEq => self.execute_bin_op(op)?,
                 OpCode::Pop => {
                     self.pop();
                 }
+                OpCode::True => self.push(Object::Bool(true))?,
+                OpCode::False => self.push(Object::Bool(false))?,
                 _ => todo!(),
             }
         }
@@ -91,9 +99,17 @@ impl Vm {
                 OpCode::Sub => self.push(Object::Integer(left - right)),
                 OpCode::Mul => self.push(Object::Integer(left * right)),
                 OpCode::Div => self.push(Object::Integer(left / right)),
+                OpCode::Eq => self.push(Object::Bool(left == right)),
+                OpCode::NotEq => self.push(Object::Bool(left != right)),
+                OpCode::Greater => self.push(Object::Bool(left > right)),
                 _ => unreachable!(),
             },
-            _ => Err(format!("unknown operation: {} + {}", left, right)),
+            _ if left.kind() == right.kind() => match op {
+                OpCode::Eq => self.push(Object::Bool(left == right)),
+                OpCode::NotEq => self.push(Object::Bool(left != right)),
+                _ => Err(format!("unknown operation: {} {} {}", left, op, right)),
+            },
+            _ => Err(format!("unknown operation: {} {} {}", left, op, right)),
         }
     }
 }

@@ -1,9 +1,15 @@
 use super::*;
 use crate::{ast::Parser, compiler::Compiler, lexer::Lexer};
 
+macro_rules! test {
+    ($($case:expr),* $(,)?) => {
+        test(&[$($case),*])
+    };
+}
+
 #[test]
 fn integer_math() {
-    let inputs = [
+    test!(
         ("1", Object::Integer(1)),
         ("2", Object::Integer(2)),
         ("1 + 2", Object::Integer(3)),
@@ -16,10 +22,37 @@ fn integer_math() {
         ("5 * 2 + 10", Object::Integer(20)),
         ("5 + 2 * 10", Object::Integer(25)),
         ("5 * (2 + 10)", Object::Integer(60)),
-    ];
+    )
+}
 
-    for (inp, exp) in inputs {
-        let lexer = Lexer::new(inp.into());
+#[test]
+fn bool_expressions() {
+    test!(
+        ("true", Object::Bool(true)),
+        ("false", Object::Bool(false)),
+        ("1 < 2", Object::Bool(true)),
+        ("1 > 2", Object::Bool(false)),
+        ("1 < 1", Object::Bool(false)),
+        ("1 > 1", Object::Bool(false)),
+        ("1 == 1", Object::Bool(true)),
+        ("1 != 1", Object::Bool(false)),
+        ("1 == 2", Object::Bool(false)),
+        ("1 != 2", Object::Bool(true)),
+        ("true == true", Object::Bool(true)),
+        ("false == false", Object::Bool(true)),
+        ("true == false", Object::Bool(false)),
+        ("true != false", Object::Bool(true)),
+        ("false != true", Object::Bool(true)),
+        ("(1 < 2) == true", Object::Bool(true)),
+        ("(1 < 2) == false", Object::Bool(false)),
+        ("(1 > 2) == true", Object::Bool(false)),
+        ("(1 > 2) == false", Object::Bool(true)),
+    )
+}
+
+fn test(cases: &[(&str, Object)]) {
+    for (inp, exp) in cases {
+        let lexer = Lexer::new(inp.to_string());
         let mut parser = Parser::new(lexer);
         let program = parser.parse().expect("Skill issue");
 
@@ -30,6 +63,6 @@ fn integer_math() {
         let mut vm = Vm::new(bytecode);
         vm.run().unwrap();
 
-        assert_eq!(vm.last_popped(), &exp);
+        assert_eq!(vm.last_popped(), exp);
     }
 }
