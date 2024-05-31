@@ -22,6 +22,10 @@ fn integer_math() {
         ("5 * 2 + 10", Object::Integer(20)),
         ("5 + 2 * 10", Object::Integer(25)),
         ("5 * (2 + 10)", Object::Integer(60)),
+        ("-5", Object::Integer(-5)),
+        ("-10", Object::Integer(-10)),
+        ("-50 + 100 + -50", Object::Integer(0)),
+        ("(5 + 10 * 2 + 15 / 3) * 2 + -10", Object::Integer(50)),
     )
 }
 
@@ -47,6 +51,32 @@ fn bool_expressions() {
         ("(1 < 2) == false", Object::Bool(false)),
         ("(1 > 2) == true", Object::Bool(false)),
         ("(1 > 2) == false", Object::Bool(true)),
+        ("!true", Object::Bool(false)),
+        ("!false", Object::Bool(true)),
+        ("!5", Object::Bool(false)),
+        ("!!true", Object::Bool(true)),
+        ("!!false", Object::Bool(false)),
+        ("!!5", Object::Bool(true)),
+        ("!(if (false) { 5; })", Object::Bool(true)),
+    )
+}
+
+#[test]
+fn conditionals() {
+    test!(
+        ("if (true) { 10 }", Object::Integer(10)),
+        ("if (true) { 10 } else { 20 }", Object::Integer(10)),
+        ("if (false) { 10 } else { 20 } ", Object::Integer(20)),
+        ("if (1) { 10 }", Object::Integer(10)),
+        ("if (1 < 2) { 10 }", Object::Integer(10)),
+        ("if (1 < 2) { 10 } else { 20 }", Object::Integer(10)),
+        ("if (1 > 2) { 10 } else { 20 }", Object::Integer(20)),
+        ("if (false) { 10 }", Object::Null),
+        ("if (1 > 2) { 10 }", Object::Null),
+        (
+            "if ((if (false) { 10 })) { 10 } else { 20 }",
+            Object::Integer(20)
+        ),
     )
 }
 
@@ -59,10 +89,11 @@ fn test(cases: &[(&str, Object)]) {
         let mut compiler = Compiler::default();
         compiler.compile(program).expect("Skill issue");
         let bytecode = compiler.bytecode();
+        let s = format!("{}", bytecode.instructions);
 
         let mut vm = Vm::new(bytecode);
         vm.run().unwrap();
 
-        assert_eq!(vm.last_popped(), exp);
+        assert_eq!(vm.last_popped(), exp, "{}", s);
     }
 }

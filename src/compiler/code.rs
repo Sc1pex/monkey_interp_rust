@@ -18,6 +18,17 @@ impl Bytes {
     pub fn len(&self) -> usize {
         self.data.len()
     }
+
+    pub fn remove(&mut self, pos: usize) {
+        self.data.truncate(pos);
+    }
+
+    pub fn patch<T: BytesWrite>(&mut self, pos: usize, val: T) {
+        let mut patched = Bytes::default();
+        patched.push(val);
+        let len = patched.len();
+        self.data[pos..(pos + len)].copy_from_slice(&patched.data)
+    }
 }
 
 impl Display for Bytes {

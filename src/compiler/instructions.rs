@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use super::code::{Bytes, BytesWrite};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum OpCode {
     Constant,
     Add,
@@ -15,6 +15,10 @@ pub enum OpCode {
     Eq,
     NotEq,
     Greater,
+    Bang,
+    Minus,
+    Jump,
+    JumpNotTrue,
 }
 
 impl OpCode {
@@ -31,6 +35,10 @@ impl OpCode {
             OpCode::Eq => Definition::new("OpEq", &[]),
             OpCode::NotEq => Definition::new("OpNotEq", &[]),
             OpCode::Greater => Definition::new("OpGreater", &[]),
+            OpCode::Bang => Definition::new("OpBang", &[]),
+            OpCode::Minus => Definition::new("OpMinus", &[]),
+            OpCode::Jump => Definition::new("OpJump", &[2]),
+            OpCode::JumpNotTrue => Definition::new("OpJumpNotTrue", &[2]),
         }
     }
 }
@@ -68,7 +76,7 @@ impl Definition {
 }
 
 pub struct Instruction<'a> {
-    op: OpCode,
+    pub op: OpCode,
     operands: &'a [i32],
 }
 
@@ -81,6 +89,14 @@ impl<'a> Instruction<'a> {
         let mut b = Bytes::default();
         b.push(self);
         b
+    }
+
+    // Compiler has a null object as first constant
+    pub fn null() -> Self {
+        Self {
+            op: OpCode::Constant,
+            operands: &[0],
+        }
     }
 }
 

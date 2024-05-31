@@ -8,10 +8,30 @@ pub use instructions::{Instruction, OpCode};
 mod code;
 mod instructions;
 
-#[derive(Default)]
 pub struct Compiler {
     instructions: Bytes,
     constants: Vec<Object>,
+
+    last: Option<Emmited>,
+    prev: Option<Emmited>,
+}
+
+impl Default for Compiler {
+    fn default() -> Self {
+        Self {
+            instructions: Bytes::default(),
+            constants: vec![Object::Null],
+
+            last: None,
+            prev: None,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct Emmited {
+    opcode: OpCode,
+    pos: usize,
 }
 
 #[derive(Default)]
@@ -22,10 +42,7 @@ pub struct Bytecode {
 
 impl Compiler {
     pub fn compile(&mut self, program: Program) -> CompileResult {
-        for stmt in program.statements {
-            self.compile_stmt(stmt)?;
-        }
-        Ok(())
+        self.compile_block(program.statements)
     }
 
     pub fn bytecode(self) -> Bytecode {
@@ -58,7 +75,7 @@ impl Compiler {
                 self.emit(Instruction::new(OpCode::Constant, &[idx]));
             }
             Expression::String(_) => todo!(),
-            Expression::Prefix(_) => todo!(),
+            Expression::Prefix(p) => self.compile_prefix(p)?,
             Expression::Infix(i) => self.compile_infix(i)?,
             Expression::Bool(b) => {
                 match b {
@@ -66,7 +83,38 @@ impl Compiler {
                     false => self.emit(Instruction::new(OpCode::False, &[])),
                 };
             }
-            Expression::If(_) => todo!(),
+            Expression::If(IfExpr {
+                condition,
+                if_branch,
+                else_branch,
+            }) => {
+                self.compile_expr(*condition)?;
+                let jmp_if = self.emit(Instruction::new(OpCode::JumpNotTrue, &[9999]));
+
+                self.compile_block(if_branch)?;
+                if self.last_is(OpCode::Pop) {
+                    self.remove_last();
+                }
+                let jmp_else = self.emit(Instruction::new(OpCode::Jump, &[9999]));
+
+                self.patch(
+                    jmp_if,
+                    Instruction::new(OpCode::JumpNotTrue, &[self.instructions.len() as i32]),
+                );
+
+                if let Some(else_branch) = else_branch {
+                    self.compile_block(else_branch)?;
+                    if self.last_is(OpCode::Pop) {
+                        self.remove_last();
+                    }
+                } else {
+                    self.emit(Instruction::null());
+                }
+                self.patch(
+                    jmp_else,
+                    Instruction::new(OpCode::Jump, &[self.instructions.len() as i32]),
+                )
+            }
             Expression::Func(_) => todo!(),
             Expression::Call(_) => todo!(),
             Expression::Array(_) => todo!(),
@@ -79,6 +127,13 @@ impl Compiler {
 }
 
 impl Compiler {
+    fn compile_block(&mut self, block: Vec<Statement>) -> CompileResult {
+        for stmt in block {
+            self.compile_stmt(stmt)?;
+        }
+        Ok(())
+    }
+
     fn add_constant(&mut self, obj: Object) -> usize {
         self.constants.push(obj);
         self.constants.len() - 1
@@ -86,8 +141,23 @@ impl Compiler {
 
     fn emit(&mut self, i: Instruction) -> usize {
         let pos = self.instructions.len();
+
+        self.prev = self.last;
+        self.last = Some(Emmited { opcode: i.op, pos });
+
         self.instructions.push(i);
         pos
+    }
+
+    fn compile_prefix(&mut self, p: PrefixExpr) -> CompileResult {
+        self.compile_expr(*p.right)?;
+        match p.operator {
+            TokenType::Minus => self.emit(Instruction::new(OpCode::Minus, &[])),
+            TokenType::Bang => self.emit(Instruction::new(OpCode::Bang, &[])),
+            _ => unreachable!(),
+        };
+
+        Ok(())
     }
 
     fn compile_infix(&mut self, i: InfixExpr) -> CompileResult {
@@ -123,6 +193,21 @@ impl Compiler {
             _ => unreachable!(),
         };
         Ok(())
+    }
+
+    fn last_is(&self, op: OpCode) -> bool {
+        self.last.map(|l| l.opcode == op).unwrap_or(false)
+    }
+
+    fn remove_last(&mut self) {
+        let last = self.last.expect("No instruction to remove");
+        self.instructions.remove(last.pos);
+
+        self.last = self.prev;
+    }
+
+    fn patch(&mut self, pos: usize, i: Instruction) {
+        self.instructions.patch(pos, i);
     }
 }
 

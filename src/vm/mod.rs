@@ -52,6 +52,30 @@ impl Vm {
                 }
                 OpCode::True => self.push(Object::Bool(true))?,
                 OpCode::False => self.push(Object::Bool(false))?,
+                OpCode::Minus => {
+                    let right = self.pop();
+                    match right {
+                        Object::Integer(right) => self.push(Object::Integer(-right))?,
+                        _ => return Err(format!("unknown operator: -{}", right.kind())),
+                    }
+                }
+                OpCode::Bang => {
+                    let right = self.pop();
+                    self.push(Object::Bool(!right.is_truthy()))?
+                }
+                OpCode::JumpNotTrue => {
+                    let jmp_to: u16 = self.instructions.read(ip);
+                    ip += 2;
+
+                    let cond = self.pop();
+                    if !cond.is_truthy() {
+                        ip = jmp_to as usize;
+                    }
+                }
+                OpCode::Jump => {
+                    let jmp_to: u16 = self.instructions.read(ip);
+                    ip = jmp_to as usize;
+                }
                 _ => todo!(),
             }
         }
@@ -107,9 +131,19 @@ impl Vm {
             _ if left.kind() == right.kind() => match op {
                 OpCode::Eq => self.push(Object::Bool(left == right)),
                 OpCode::NotEq => self.push(Object::Bool(left != right)),
-                _ => Err(format!("unknown operation: {} {} {}", left, op, right)),
+                _ => Err(format!(
+                    "unknown operation: {} {} {}",
+                    left.kind(),
+                    op,
+                    right.kind()
+                )),
             },
-            _ => Err(format!("unknown operation: {} {} {}", left, op, right)),
+            _ => Err(format!(
+                "unknown operation: {} {} {}",
+                left.kind(),
+                op,
+                right.kind()
+            )),
         }
     }
 }
