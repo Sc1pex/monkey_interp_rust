@@ -6,11 +6,13 @@ use crate::{
 };
 
 const STACK_SIZE: usize = 2048;
+const GLOBALS_SIZE: usize = 0xFFFF;
 
 pub struct Vm {
     instructions: Bytes,
     constants: Vec<Object>,
 
+    globals: Vec<Object>,
     stack: Box<[Object; STACK_SIZE]>,
     /// Points to next value. Top of stack is at sp - 1
     sp: usize,
@@ -22,9 +24,26 @@ impl Vm {
             instructions: b.instructions,
             constants: b.constants,
 
+            globals: vec![Object::Null; GLOBALS_SIZE],
             stack: vec![Object::Null; STACK_SIZE].try_into().unwrap(),
             sp: 0,
         }
+    }
+
+    pub fn new_with_state(b: Bytecode, globals: Vec<Object>) -> Self {
+        assert_eq!(globals.len(), GLOBALS_SIZE);
+
+        Self {
+            instructions: b.instructions,
+            constants: b.constants,
+            globals,
+            stack: vec![Object::Null; STACK_SIZE].try_into().unwrap(),
+            sp: 0,
+        }
+    }
+
+    pub fn state(&self) -> Vec<Object> {
+        self.globals.clone()
     }
 
     pub fn run(&mut self) -> RunResult {
@@ -37,8 +56,8 @@ impl Vm {
             match op {
                 OpCode::Constant => {
                     let const_idx: u16 = self.instructions.read(ip);
-                    self.push(self.constants[const_idx as usize].clone())?;
                     ip += 2;
+                    self.push(self.constants[const_idx as usize].clone())?;
                 }
                 OpCode::Add
                 | OpCode::Sub
@@ -75,6 +94,18 @@ impl Vm {
                 OpCode::Jump => {
                     let jmp_to: u16 = self.instructions.read(ip);
                     ip = jmp_to as usize;
+                }
+                OpCode::SetGlobal => {
+                    let idx: u16 = self.instructions.read(ip);
+                    ip += 2;
+
+                    self.globals[idx as usize] = self.pop();
+                }
+                OpCode::GetGlobal => {
+                    let idx: u16 = self.instructions.read(ip);
+                    ip += 2;
+
+                    self.push(self.globals[idx as usize].clone())?
                 }
                 _ => todo!(),
             }

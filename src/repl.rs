@@ -1,16 +1,28 @@
-use crate::{ast::Parser, compiler::Compiler, eval::Object, lexer::Lexer, vm::Vm};
+use crate::{
+    ast::Parser,
+    compiler::{Compiler, SymbolTable},
+    eval::Object,
+    lexer::Lexer,
+    vm::Vm,
+};
 use std::io::Write;
 
 pub fn start() {
+    let mut comp_state = None;
+    let mut vm_state = None;
+
     loop {
-        match run() {
+        match run(&mut comp_state, &mut vm_state) {
             Ok(o) => println!("{}", o),
             Err(s) => println!("Errors: {}", s),
         }
     }
 }
 
-fn run() -> Result<Object, String> {
+fn run(
+    comp_state: &mut Option<(SymbolTable, Vec<Object>)>,
+    vm_state: &mut Option<Vec<Object>>,
+) -> Result<Object, String> {
     print!("> ");
     std::io::stdout().flush().unwrap();
 
@@ -27,11 +39,19 @@ fn run() -> Result<Object, String> {
         })
     })?;
 
-    let mut comp = Compiler::default();
+    let mut comp = match comp_state {
+        Some((s, c)) => Compiler::new_with_state(s.clone(), c.clone()),
+        None => Compiler::default(),
+    };
     comp.compile(program)?;
+    comp_state.replace(comp.state());
 
-    let mut vm = Vm::new(comp.bytecode());
+    let mut vm = match vm_state {
+        Some(s) => Vm::new_with_state(comp.bytecode(), s.clone()),
+        None => Vm::new(comp.bytecode()),
+    };
     vm.run()?;
+    vm_state.replace(vm.state());
 
     Ok(vm.last_popped().clone())
 }

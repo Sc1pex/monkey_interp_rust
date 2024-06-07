@@ -4,9 +4,11 @@ use crate::{ast::*, eval::Object, lexer::TokenType};
 
 pub use code::Bytes;
 pub use instructions::{Instruction, OpCode};
+pub use symbol_table::SymbolTable;
 
 mod code;
 mod instructions;
+mod symbol_table;
 
 pub struct Compiler {
     instructions: Bytes,
@@ -14,6 +16,8 @@ pub struct Compiler {
 
     last: Option<Emmited>,
     prev: Option<Emmited>,
+
+    symbol_table: SymbolTable,
 }
 
 impl Default for Compiler {
@@ -24,6 +28,8 @@ impl Default for Compiler {
 
             last: None,
             prev: None,
+
+            symbol_table: SymbolTable::default(),
         }
     }
 }
@@ -41,6 +47,18 @@ pub struct Bytecode {
 }
 
 impl Compiler {
+    pub fn new_with_state(symbol_table: SymbolTable, constants: Vec<Object>) -> Self {
+        Self {
+            symbol_table,
+            constants,
+            ..Default::default()
+        }
+    }
+
+    pub fn state(&self) -> (SymbolTable, Vec<Object>) {
+        (self.symbol_table.clone(), self.constants.clone())
+    }
+
     pub fn compile(&mut self, program: Program) -> CompileResult {
         self.compile_block(program.statements)
     }
@@ -56,7 +74,12 @@ impl Compiler {
 impl Compiler {
     fn compile_stmt(&mut self, stmt: Statement) -> CompileResult {
         match stmt {
-            Statement::Let(_) => todo!(),
+            Statement::Let(l) => {
+                self.compile_expr(l.expr)?;
+                let sym = self.symbol_table.define(&l.ident);
+                self.emit(Instruction::new(OpCode::SetGlobal, &[sym.index as u32]));
+                Ok(())
+            }
             Statement::Return(_) => todo!(),
             Statement::Expression(e) => {
                 self.compile_expr(e)?;
@@ -68,10 +91,16 @@ impl Compiler {
 
     fn compile_expr(&mut self, expr: Expression) -> CompileResult {
         match expr {
-            Expression::Ident(_) => todo!(),
+            Expression::Ident(i) => {
+                let sym = self
+                    .symbol_table
+                    .resolve(&i)
+                    .ok_or(format!("undefined symbol: {}", i))?;
+                self.emit(Instruction::new(OpCode::GetGlobal, &[sym.index as u32]));
+            }
             Expression::Number(x) => {
                 let obj = Object::Integer(x);
-                let idx = self.add_constant(obj) as i32;
+                let idx = self.add_constant(obj) as u32;
                 self.emit(Instruction::new(OpCode::Constant, &[idx]));
             }
             Expression::String(_) => todo!(),
@@ -99,7 +128,7 @@ impl Compiler {
 
                 self.patch(
                     jmp_if,
-                    Instruction::new(OpCode::JumpNotTrue, &[self.instructions.len() as i32]),
+                    Instruction::new(OpCode::JumpNotTrue, &[self.instructions.len() as u32]),
                 );
 
                 if let Some(else_branch) = else_branch {
@@ -112,7 +141,7 @@ impl Compiler {
                 }
                 self.patch(
                     jmp_else,
-                    Instruction::new(OpCode::Jump, &[self.instructions.len() as i32]),
+                    Instruction::new(OpCode::Jump, &[self.instructions.len() as u32]),
                 )
             }
             Expression::Func(_) => todo!(),

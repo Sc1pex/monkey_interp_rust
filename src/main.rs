@@ -33,8 +33,7 @@ fn run(file: &str) {
     let env = Environment::new();
     let program = parser.parse().unwrap();
 
-    match eval_program(program, &env) {
-        Ok(_) => {}
-        Err(e) => println!("Evaluation error: {}", e),
+    if let Err(e) = eval_program(program, &env) {
+        println!("Evaluation error: {}", e)
     }
 }

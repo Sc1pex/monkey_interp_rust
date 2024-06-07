@@ -80,6 +80,18 @@ fn conditionals() {
     )
 }
 
+#[test]
+fn global_let() {
+    test!(
+        ("let one = 1; one", Object::Integer(1)),
+        ("let one = 1; let two = 2; one + two", Object::Integer(3)),
+        (
+            "let one = 1; let two = one + one; one + two",
+            Object::Integer(3)
+        ),
+    )
+}
+
 fn test(cases: &[(&str, Object)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());

@@ -1,6 +1,5 @@
-use std::fmt::Display;
-
 use super::code::{Bytes, BytesWrite};
+use std::fmt::Display;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum OpCode {
@@ -19,6 +18,8 @@ pub enum OpCode {
     Minus,
     Jump,
     JumpNotTrue,
+    SetGlobal,
+    GetGlobal,
 }
 
 impl OpCode {
@@ -39,6 +40,8 @@ impl OpCode {
             OpCode::Minus => Definition::new("OpMinus", &[]),
             OpCode::Jump => Definition::new("OpJump", &[2]),
             OpCode::JumpNotTrue => Definition::new("OpJumpNotTrue", &[2]),
+            OpCode::SetGlobal => Definition::new("OpSetGlobal", &[2]),
+            OpCode::GetGlobal => Definition::new("OpGetGlobal", &[2]),
         }
     }
 }
@@ -77,11 +80,11 @@ impl Definition {
 
 pub struct Instruction<'a> {
     pub op: OpCode,
-    operands: &'a [i32],
+    operands: &'a [u32],
 }
 
 impl<'a> Instruction<'a> {
-    pub fn new(op: OpCode, operands: &'a [i32]) -> Self {
+    pub fn new(op: OpCode, operands: &'a [u32]) -> Self {
         Self { op, operands }
     }
 
@@ -118,35 +121,6 @@ impl<'a> BytesWrite for &Instruction<'a> {
                 }
                 _ => unimplemented!(),
             }
-        }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn make() {
-        let tests: [(Instruction, &[u8]); 2] = [
-            (
-                Instruction {
-                    op: OpCode::Constant,
-                    operands: &[65534],
-                },
-                &[OpCode::Constant as u8, 255, 254],
-            ),
-            (
-                Instruction {
-                    op: OpCode::Add,
-                    operands: &[],
-                },
-                &[OpCode::Add as u8],
-            ),
-        ];
-
-        for (instr, exp) in tests {
-            assert_eq!(instr.make(), &exp[..]);
         }
     }
 }

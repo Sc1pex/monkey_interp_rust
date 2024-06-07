@@ -172,6 +172,48 @@ fn conditionals() {
     )
 }
 
+#[test]
+fn global_let() {
+    test!(
+        (
+            r#" let one = 1;
+            let two = 2;"#,
+            &[Object::Integer(1), Object::Integer(2)],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::SetGlobal, &[0]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::SetGlobal, &[1]),
+            ]
+        ),
+        (
+            r#" let one = 1;
+            one;"#,
+            &[Object::Integer(1)],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::SetGlobal, &[0]),
+                Instruction::new(OpCode::GetGlobal, &[0]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            r#" let one = 1;
+            let two = one;
+            two;"#,
+            &[Object::Integer(1)],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::SetGlobal, &[0]),
+                Instruction::new(OpCode::GetGlobal, &[0]),
+                Instruction::new(OpCode::SetGlobal, &[1]),
+                Instruction::new(OpCode::GetGlobal, &[1]),
+                Instruction::new(OpCode::Pop, &[]),
+            ],
+        ),
+    )
+}
+
 fn test(cases: &[(&str, &[Object], &[Instruction])]) {
     for (input, consts, instrs) in cases {
         let lexer = Lexer::new(input.to_string());

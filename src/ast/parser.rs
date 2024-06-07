@@ -397,6 +397,7 @@ type ParseError = Vec<ParseErrorKind>;
 type ParseResult<T> = Result<T, ParseError>;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum ParseErrorKind {
     UnexpectedToken(UnexpectedErr),
     UnknownPrefixExpr(TokenType),
@@ -404,6 +405,7 @@ pub enum ParseErrorKind {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct UnexpectedErr {
     pub expected: TokenType,
     pub found: TokenType,
