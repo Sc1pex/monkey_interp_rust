@@ -214,6 +214,30 @@ fn global_let() {
     )
 }
 
+#[test]
+fn strings() {
+    test!(
+        (
+            r#""monkey""#,
+            &[Object::String("monkey".into())],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Pop, &[]),
+            ],
+        ),
+        (
+            r#""mon" + "key""#,
+            &[Object::String("mon".into()), Object::String("key".into())],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::Add, &[]),
+                Instruction::new(OpCode::Pop, &[]),
+            ],
+        ),
+    )
+}
+
 fn test(cases: &[(&str, &[Object], &[Instruction])]) {
     for (input, consts, instrs) in cases {
         let lexer = Lexer::new(input.to_string());

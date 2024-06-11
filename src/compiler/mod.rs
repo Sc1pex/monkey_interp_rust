@@ -103,7 +103,11 @@ impl Compiler {
                 let idx = self.add_constant(obj) as u32;
                 self.emit(Instruction::new(OpCode::Constant, &[idx]));
             }
-            Expression::String(_) => todo!(),
+            Expression::String(s) => {
+                let obj = Object::String(s);
+                let idx = self.add_constant(obj) as u32;
+                self.emit(Instruction::new(OpCode::Constant, &[idx]));
+            }
             Expression::Prefix(p) => self.compile_prefix(p)?,
             Expression::Infix(i) => self.compile_infix(i)?,
             Expression::Bool(b) => {

@@ -159,6 +159,15 @@ impl Vm {
                 OpCode::Greater => self.push(Object::Bool(left > right)),
                 _ => unreachable!(),
             },
+            (Object::String(l), Object::String(r)) => match op {
+                OpCode::Add => self.push(Object::String(l.to_owned() + r)),
+                _ => Err(format!(
+                    "unknown operation: {} {} {}",
+                    left.kind(),
+                    op,
+                    right.kind()
+                )),
+            },
             _ if left.kind() == right.kind() => match op {
                 OpCode::Eq => self.push(Object::Bool(left == right)),
                 OpCode::NotEq => self.push(Object::Bool(left != right)),

@@ -92,6 +92,18 @@ fn global_let() {
     )
 }
 
+#[test]
+fn strings() {
+    test!(
+        (r#" "monkey" "#, Object::String("monkey".into())),
+        (r#" "mon" + "key" "#, Object::String("monkey".into())),
+        (
+            r#" "mon" + "key" + "banana" "#,
+            Object::String("monkeybanana".into())
+        ),
+    )
+}
+
 fn test(cases: &[(&str, Object)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());
