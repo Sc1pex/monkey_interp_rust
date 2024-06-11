@@ -1,7 +1,7 @@
 use super::instructions::OpCode;
 use std::fmt::Display;
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone, Eq)]
 pub struct Bytes {
     data: Vec<u8>,
 }

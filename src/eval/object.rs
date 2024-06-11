@@ -1,5 +1,5 @@
 use super::{builtin::Builtin, Environment};
-use crate::ast::FuncExpr;
+use crate::{ast::FuncExpr, compiler::Bytes};
 use std::{cell::RefCell, collections::HashMap, fmt::Display, hash::Hash, rc::Rc};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -10,6 +10,7 @@ pub enum Object {
 
     Return(Rc<Object>),
     Func(FuncObj),
+    CompiledFunc(CompiledFuncObj),
     Builtin(Builtin),
     Array(ArrayObj),
     Hash(HashObj),
@@ -37,6 +38,7 @@ impl Object {
             Object::Null => "NULL",
             Object::Return(_) => "RETURN",
             Object::Func(_) => "FUNCTION",
+            Object::CompiledFunc(_) => "COMPILED FUNCTION",
             Object::Builtin(_) => "BUILTIN",
             Object::Array(_) => "ARRAY",
             Object::Hash(_) => "HASH",
@@ -64,6 +66,7 @@ impl Display for Object {
             Object::Null => write!(f, "null"),
             Object::Return(o) => write!(f, "{}", o),
             Object::Func(o) => write!(f, "{}", o),
+            Object::CompiledFunc(o) => write!(f, "{}", o),
             Object::Builtin(_) => write!(f, "builtin"),
             Object::Array(a) => write!(f, "{}", a),
             Object::Hash(h) => write!(f, "{}", h),
@@ -80,6 +83,17 @@ pub struct FuncObj {
 impl Display for FuncObj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.expr)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct CompiledFuncObj {
+    pub instructions: Bytes,
+}
+
+impl Display for CompiledFuncObj {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, " {}", self.instructions)
     }
 }
 

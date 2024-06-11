@@ -10,26 +10,26 @@ mod code;
 mod instructions;
 mod symbol_table;
 
-pub struct Compiler {
+#[derive(Default)]
+struct Scope {
     instructions: Bytes,
-    constants: Vec<Object>,
 
     last: Option<Emmited>,
     prev: Option<Emmited>,
+}
 
+pub struct Compiler {
+    constants: Vec<Object>,
     symbol_table: SymbolTable,
+    scopes: Vec<Scope>,
 }
 
 impl Default for Compiler {
     fn default() -> Self {
         Self {
-            instructions: Bytes::default(),
             constants: vec![Object::Null],
-
-            last: None,
-            prev: None,
-
             symbol_table: SymbolTable::default(),
+            scopes: vec![Scope::default()],
         }
     }
 }
@@ -65,7 +65,7 @@ impl Compiler {
 
     pub fn bytecode(self) -> Bytecode {
         Bytecode {
-            instructions: self.instructions,
+            instructions: self.current_scope().instructions.clone(),
             constants: self.constants,
         }
     }
@@ -80,7 +80,11 @@ impl Compiler {
                 self.emit(Instruction::new(OpCode::SetGlobal, &[sym.index as u32]));
                 Ok(())
             }
-            Statement::Return(_) => todo!(),
+            Statement::Return(r) => {
+                self.compile_expr(r.expr)?;
+                self.emit(Instruction::new(OpCode::ReturnValue, &[]));
+                Ok(())
+            }
             Statement::Expression(e) => {
                 self.compile_expr(e)?;
                 self.emit(Instruction::new(OpCode::Pop, &[]));
@@ -132,7 +136,7 @@ impl Compiler {
 
                 self.patch(
                     jmp_if,
-                    Instruction::new(OpCode::JumpNotTrue, &[self.instructions.len() as u32]),
+                    Instruction::new(OpCode::JumpNotTrue, &[self.instructions().len() as u32]),
                 );
 
                 if let Some(else_branch) = else_branch {
@@ -145,10 +149,26 @@ impl Compiler {
                 }
                 self.patch(
                     jmp_else,
-                    Instruction::new(OpCode::Jump, &[self.instructions.len() as u32]),
+                    Instruction::new(OpCode::Jump, &[self.instructions().len() as u32]),
                 )
             }
-            Expression::Func(_) => todo!(),
+            Expression::Func(f) => {
+                self.enter_scope();
+                self.compile_block(f.body)?;
+                if self.last_is(OpCode::Pop) {
+                    self.remove_last();
+                    self.emit(Instruction::new(OpCode::ReturnValue, &[]));
+                }
+                if !self.last_is(OpCode::ReturnValue) {
+                    self.emit(Instruction::new(OpCode::Return, &[]));
+                }
+                let body = self.leave_scope().instructions;
+
+                let idx = self.add_constant(Object::CompiledFunc(crate::eval::CompiledFuncObj {
+                    instructions: body,
+                })) as u32;
+                self.emit(Instruction::new(OpCode::Constant, &[idx]));
+            }
             Expression::Call(_) => todo!(),
             Expression::Array(a) => {
                 let len = a.elements.len();
@@ -190,12 +210,12 @@ impl Compiler {
     }
 
     fn emit(&mut self, i: Instruction) -> usize {
-        let pos = self.instructions.len();
+        let pos = self.instructions().len();
 
-        self.prev = self.last;
-        self.last = Some(Emmited { opcode: i.op, pos });
+        self.current_scope_mut().prev = self.current_scope().last;
+        self.current_scope_mut().last = Some(Emmited { opcode: i.op, pos });
 
-        self.instructions.push(i);
+        self.instructions_mut().push(i);
         pos
     }
 
@@ -246,18 +266,50 @@ impl Compiler {
     }
 
     fn last_is(&self, op: OpCode) -> bool {
-        self.last.map(|l| l.opcode == op).unwrap_or(false)
+        self.current_scope()
+            .last
+            .map(|l| l.opcode == op)
+            .unwrap_or(false)
     }
 
     fn remove_last(&mut self) {
-        let last = self.last.expect("No instruction to remove");
-        self.instructions.remove(last.pos);
+        let last = self.current_scope().last.expect("No instruction to remove");
+        self.instructions_mut().remove(last.pos);
 
-        self.last = self.prev;
+        self.current_scope_mut().last = self.current_scope().prev;
     }
 
     fn patch(&mut self, pos: usize, i: Instruction) {
-        self.instructions.patch(pos, i);
+        self.instructions_mut().patch(pos, i);
+    }
+
+    fn enter_scope(&mut self) {
+        self.scopes.push(Scope::default());
+    }
+
+    fn leave_scope(&mut self) -> Scope {
+        assert!(self.scopes.len() > 1, "Cannot leave out of main scope");
+        self.scopes.pop().unwrap()
+    }
+
+    fn instructions(&self) -> &Bytes {
+        &self.current_scope().instructions
+    }
+
+    fn instructions_mut(&mut self) -> &mut Bytes {
+        &mut self.current_scope_mut().instructions
+    }
+
+    fn current_scope(&self) -> &Scope {
+        self.scopes
+            .last()
+            .expect("There should always exist at least one scope")
+    }
+
+    fn current_scope_mut(&mut self) -> &mut Scope {
+        self.scopes
+            .last_mut()
+            .expect("There should always exist at least one scope")
     }
 }
 

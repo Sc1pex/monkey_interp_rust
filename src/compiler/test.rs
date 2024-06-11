@@ -1,5 +1,5 @@
 use super::*;
-use crate::{ast::Parser, lexer::Lexer};
+use crate::{ast::Parser, eval::CompiledFuncObj, lexer::Lexer};
 use instructions::{Instruction, OpCode};
 
 macro_rules! test {
@@ -391,6 +391,100 @@ fn index() {
     )
 }
 
+#[test]
+fn functions() {
+    test!(
+        (
+            "fn() { return 10 + 5 }",
+            &[
+                Object::Integer(10),
+                Object::Integer(5),
+                Object::CompiledFunc(CompiledFuncObj {
+                    instructions: [
+                        Instruction::new(OpCode::Constant, &[1]),
+                        Instruction::new(OpCode::Constant, &[2]),
+                        Instruction::new(OpCode::Add, &[]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                })
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            "fn() { 10 + 5 }",
+            &[
+                Object::Integer(10),
+                Object::Integer(5),
+                Object::CompiledFunc(CompiledFuncObj {
+                    instructions: [
+                        Instruction::new(OpCode::Constant, &[1]),
+                        Instruction::new(OpCode::Constant, &[2]),
+                        Instruction::new(OpCode::Add, &[]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                })
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            "fn() {10; 5}",
+            &[
+                Object::Integer(10),
+                Object::Integer(5),
+                Object::CompiledFunc(CompiledFuncObj {
+                    instructions: [
+                        Instruction::new(OpCode::Constant, &[1]),
+                        Instruction::new(OpCode::Pop, &[]),
+                        Instruction::new(OpCode::Constant, &[2]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                })
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            "fn() {}",
+            &[Object::CompiledFunc(CompiledFuncObj {
+                instructions: [Instruction::new(OpCode::Return, &[]),].into_iter().fold(
+                    Bytes::default(),
+                    |mut b, i| {
+                        b.push(i);
+                        b
+                    }
+                ),
+            })],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+    )
+}
+
 fn test(cases: &[(&str, &[Object], &[Instruction])]) {
     for (input, consts, instrs) in cases {
         let lexer = Lexer::new(input.to_string());
@@ -413,6 +507,19 @@ fn test(cases: &[(&str, &[Object], &[Instruction])]) {
             bytecode.instructions,
         );
 
-        assert_eq!(&bytecode.constants[1..], *consts);
+        assert!(
+            &bytecode.constants[1..] == *consts,
+            "Wrong constants. expected:\n{}got:\n{}",
+            print_objs(consts),
+            print_objs(&bytecode.constants),
+        );
     }
+}
+
+fn print_objs(objs: &[Object]) -> String {
+    let mut s = String::new();
+    for o in objs {
+        s += &format!("{}\n", o);
+    }
+    s
 }

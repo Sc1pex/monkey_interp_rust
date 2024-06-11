@@ -1,7 +1,7 @@
 use super::code::{Bytes, BytesWrite};
 use std::fmt::Display;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OpCode {
     Constant,
 
@@ -27,6 +27,10 @@ pub enum OpCode {
     Array,
     Hash,
     Index,
+
+    Call,
+    ReturnValue,
+    Return,
 }
 
 impl OpCode {
@@ -52,6 +56,9 @@ impl OpCode {
             OpCode::Array => Definition::new("OpArray", &[2]),
             OpCode::Hash => Definition::new("OpHash", &[2]),
             OpCode::Index => Definition::new("OpIndex", &[]),
+            OpCode::Call => Definition::new("OpCall", &[]),
+            OpCode::ReturnValue => Definition::new("OpReturnValue", &[]),
+            OpCode::Return => Definition::new("OpReturn", &[]),
         }
     }
 }
@@ -88,14 +95,18 @@ impl Definition {
     }
 }
 
-pub struct Instruction<'a> {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Instruction {
     pub op: OpCode,
-    operands: &'a [u32],
+    pub operands: Box<[u32]>,
 }
 
-impl<'a> Instruction<'a> {
-    pub fn new(op: OpCode, operands: &'a [u32]) -> Self {
-        Self { op, operands }
+impl Instruction {
+    pub fn new(op: OpCode, operands: &[u32]) -> Self {
+        Self {
+            op,
+            operands: operands.into(),
+        }
     }
 
     pub fn make(self) -> Bytes {
@@ -108,28 +119,28 @@ impl<'a> Instruction<'a> {
     pub fn null() -> Self {
         Self {
             op: OpCode::Constant,
-            operands: &[0],
+            operands: Box::new([0]),
         }
     }
 }
 
-impl<'a> BytesWrite for Instruction<'a> {
+impl BytesWrite for Instruction {
     fn write(&self, b: &mut Bytes) {
         (&self).write(b)
     }
 }
-impl<'a> BytesWrite for &Instruction<'a> {
+impl BytesWrite for &Instruction {
     fn write(&self, b: &mut Bytes) {
         let def = self.op.def();
 
         b.push(self.op);
-        for (width, operand) in def.operands.iter().zip(self.operands) {
+        for (width, operand) in def.operands.iter().zip(&self.operands) {
             match width {
                 2 => {
                     let operand = *operand as u16;
                     b.push(operand);
                 }
-                _ => unimplemented!(),
+                _ => unimplemented!("{}", width),
             }
         }
     }
