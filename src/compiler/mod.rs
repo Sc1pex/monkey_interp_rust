@@ -157,7 +157,11 @@ impl Compiler {
                 }
                 self.emit(Instruction::new(OpCode::Array, &[len as u32]));
             }
-            Expression::Index(_) => todo!(),
+            Expression::Index(i) => {
+                self.compile_expr(*i.left)?;
+                self.compile_expr(*i.index)?;
+                self.emit(Instruction::new(OpCode::Index, &[]));
+            }
             Expression::Hash(h) => {
                 let len = h.pairs.len();
                 for (k, v) in h.pairs {

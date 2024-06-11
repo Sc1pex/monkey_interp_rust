@@ -169,6 +169,25 @@ fn hashes() {
     )
 }
 
+#[test]
+fn index() {
+    test!(
+        ("[1, 2, 3][1]", Object::Integer(2)),
+        ("[1, 2, 3][0 + 2]", Object::Integer(3)),
+        ("[[1, 1, 1]][0][0]", Object::Integer(1)),
+        ("[][0]", Object::Null),
+        ("[1, 2, 3][99]", Object::Null),
+        ("[1][-1]", Object::Null),
+        ("{1: 1, 2: 2}[1]", Object::Integer(1)),
+        (
+            r#"{1: 1, 2: 2, "abc": "def"}["abc"]"#,
+            Object::String("def".into())
+        ),
+        ("{1: 1}[0]", Object::Null),
+        ("{}[0]", Object::Null),
+    )
+}
+
 fn test(cases: &[(&str, Object)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());

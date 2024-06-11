@@ -345,6 +345,52 @@ fn hashes() {
     )
 }
 
+#[test]
+fn index() {
+    test!(
+        (
+            "[1, 2, 3][1 + 1]",
+            &[
+                Object::Integer(1),
+                Object::Integer(2),
+                Object::Integer(3),
+                Object::Integer(1),
+                Object::Integer(1),
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Array, &[3]),
+                Instruction::new(OpCode::Constant, &[4]),
+                Instruction::new(OpCode::Constant, &[5]),
+                Instruction::new(OpCode::Add, &[]),
+                Instruction::new(OpCode::Index, &[]),
+                Instruction::new(OpCode::Pop, &[]),
+            ],
+        ),
+        (
+            "{1: 2}[2 - 1]",
+            &[
+                Object::Integer(1),
+                Object::Integer(2),
+                Object::Integer(2),
+                Object::Integer(1),
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::Hash, &[1]),
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Constant, &[4]),
+                Instruction::new(OpCode::Sub, &[]),
+                Instruction::new(OpCode::Index, &[]),
+                Instruction::new(OpCode::Pop, &[]),
+            ],
+        ),
+    )
+}
+
 fn test(cases: &[(&str, &[Object], &[Instruction])]) {
     for (input, consts, instrs) in cases {
         let lexer = Lexer::new(input.to_string());

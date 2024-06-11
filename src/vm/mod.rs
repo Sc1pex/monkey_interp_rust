@@ -136,6 +136,11 @@ impl Vm {
                         map: pairs.into_iter().collect(),
                     }))?
                 }
+                OpCode::Index => {
+                    let index = self.pop();
+                    let left = self.pop();
+                    self.execute_index_op(left, index)?;
+                }
                 _ => todo!(),
             }
         }
@@ -171,6 +176,32 @@ impl Vm {
         let obj = self.stack[self.sp - 1].clone();
         self.sp -= 1;
         obj
+    }
+
+    fn execute_index_op(&mut self, left: Object, index: Object) -> RunResult {
+        match (&left, &index) {
+            (Object::Array(a), Object::Integer(i)) => {
+                let el = a
+                    .elements
+                    .get(*i as usize)
+                    .map(|i| Rc::unwrap_or_clone(i.clone()))
+                    .unwrap_or(Object::Null);
+                self.push(el)
+            }
+            (Object::Hash(h), _) => {
+                let el = h
+                    .map
+                    .get(&index)
+                    .map(|i| Rc::unwrap_or_clone(i.clone()))
+                    .unwrap_or(Object::Null);
+                self.push(el)
+            }
+            _ => Err(format!(
+                "index operator not supported: {} {}",
+                left.kind(),
+                index.kind()
+            )),
+        }
     }
 
     fn execute_bin_op(&mut self, op: OpCode) -> RunResult {

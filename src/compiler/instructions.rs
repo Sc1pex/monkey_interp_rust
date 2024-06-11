@@ -26,6 +26,7 @@ pub enum OpCode {
 
     Array,
     Hash,
+    Index,
 }
 
 impl OpCode {
@@ -50,6 +51,7 @@ impl OpCode {
             OpCode::GetGlobal => Definition::new("OpGetGlobal", &[2]),
             OpCode::Array => Definition::new("OpArray", &[2]),
             OpCode::Hash => Definition::new("OpHash", &[2]),
+            OpCode::Index => Definition::new("OpIndex", &[]),
         }
     }
 }
