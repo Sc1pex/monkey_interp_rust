@@ -150,7 +150,13 @@ impl Compiler {
             }
             Expression::Func(_) => todo!(),
             Expression::Call(_) => todo!(),
-            Expression::Array(_) => todo!(),
+            Expression::Array(a) => {
+                let len = a.elements.len();
+                for e in a.elements {
+                    self.compile_expr(e)?;
+                }
+                self.emit(Instruction::new(OpCode::Array, &[len as u32]));
+            }
             Expression::Index(_) => todo!(),
             Expression::Hash(_) => todo!(),
         }

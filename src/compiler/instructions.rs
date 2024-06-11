@@ -4,6 +4,7 @@ use std::fmt::Display;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum OpCode {
     Constant,
+
     Add,
     Pop,
     Sub,
@@ -16,10 +17,14 @@ pub enum OpCode {
     Greater,
     Bang,
     Minus,
+
     Jump,
     JumpNotTrue,
+
     SetGlobal,
     GetGlobal,
+
+    Array,
 }
 
 impl OpCode {
@@ -42,6 +47,7 @@ impl OpCode {
             OpCode::JumpNotTrue => Definition::new("OpJumpNotTrue", &[2]),
             OpCode::SetGlobal => Definition::new("OpSetGlobal", &[2]),
             OpCode::GetGlobal => Definition::new("OpGetGlobal", &[2]),
+            OpCode::Array => Definition::new("OpArray", &[2]),
         }
     }
 }

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::rc::Rc;
+
 use crate::{
     compiler::{Bytecode, Bytes, OpCode},
     eval::Object,
@@ -106,6 +108,18 @@ impl Vm {
                     ip += 2;
 
                     self.push(self.globals[idx as usize].clone())?
+                }
+                OpCode::Array => {
+                    let len: u16 = self.instructions.read(ip);
+                    let len = len as usize;
+                    ip += 2;
+
+                    let mut arr = vec![Object::Null.into(); len];
+                    for i in (0..len).rev() {
+                        arr[i] = Rc::new(self.pop());
+                    }
+
+                    self.push(Object::Array(crate::eval::ArrayObj { elements: arr }))?
                 }
                 _ => todo!(),
             }

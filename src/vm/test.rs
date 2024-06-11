@@ -1,5 +1,6 @@
 use super::*;
-use crate::{ast::Parser, compiler::Compiler, lexer::Lexer};
+use crate::{ast::Parser, compiler::Compiler, eval::ArrayObj, lexer::Lexer};
+use std::rc::Rc;
 
 macro_rules! test {
     ($($case:expr),* $(,)?) => {
@@ -100,6 +101,33 @@ fn strings() {
         (
             r#" "mon" + "key" + "banana" "#,
             Object::String("monkeybanana".into())
+        ),
+    )
+}
+
+#[test]
+fn arrays() {
+    test!(
+        ("[]", Object::Array(ArrayObj { elements: vec![] })),
+        (
+            "[1, 2, 3]",
+            Object::Array(ArrayObj {
+                elements: vec![
+                    Rc::new(Object::Integer(1)),
+                    Rc::new(Object::Integer(2)),
+                    Rc::new(Object::Integer(3)),
+                ]
+            })
+        ),
+        (
+            "[1 + 2, 3 * 4, 5 + 6]",
+            Object::Array(ArrayObj {
+                elements: vec![
+                    Rc::new(Object::Integer(3)),
+                    Rc::new(Object::Integer(12)),
+                    Rc::new(Object::Integer(11)),
+                ]
+            })
         ),
     )
 }
