@@ -287,6 +287,64 @@ fn arrays() {
     )
 }
 
+#[test]
+fn hashes() {
+    test!(
+        (
+            "{}",
+            &[],
+            &[
+                Instruction::new(OpCode::Hash, &[0]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            "{1: 2, 3: 4, 5: 6}",
+            &[
+                Object::Integer(1),
+                Object::Integer(2),
+                Object::Integer(3),
+                Object::Integer(4),
+                Object::Integer(5),
+                Object::Integer(6),
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Constant, &[4]),
+                Instruction::new(OpCode::Constant, &[5]),
+                Instruction::new(OpCode::Constant, &[6]),
+                Instruction::new(OpCode::Hash, &[3]),
+                Instruction::new(OpCode::Pop, &[]),
+            ],
+        ),
+        (
+            "{1: 2 + 3, 4: 5 * 6}",
+            &[
+                Object::Integer(1),
+                Object::Integer(2),
+                Object::Integer(3),
+                Object::Integer(4),
+                Object::Integer(5),
+                Object::Integer(6),
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Add, &[]),
+                Instruction::new(OpCode::Constant, &[4]),
+                Instruction::new(OpCode::Constant, &[5]),
+                Instruction::new(OpCode::Constant, &[6]),
+                Instruction::new(OpCode::Mul, &[]),
+                Instruction::new(OpCode::Hash, &[2]),
+                Instruction::new(OpCode::Pop, &[]),
+            ],
+        )
+    )
+}
+
 fn test(cases: &[(&str, &[Object], &[Instruction])]) {
     for (input, consts, instrs) in cases {
         let lexer = Lexer::new(input.to_string());

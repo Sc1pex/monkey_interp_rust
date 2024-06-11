@@ -121,6 +121,21 @@ impl Vm {
 
                     self.push(Object::Array(crate::eval::ArrayObj { elements: arr }))?
                 }
+                OpCode::Hash => {
+                    let len: u16 = self.instructions.read(ip);
+                    let len = len as usize;
+                    ip += 2;
+
+                    let mut pairs = vec![];
+                    for _ in 0..len {
+                        let v = Rc::new(self.pop());
+                        let k = Rc::new(self.pop());
+                        pairs.push((k, v));
+                    }
+                    self.push(Object::Hash(crate::eval::HashObj {
+                        map: pairs.into_iter().collect(),
+                    }))?
+                }
                 _ => todo!(),
             }
         }

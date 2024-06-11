@@ -1,6 +1,11 @@
 use super::*;
-use crate::{ast::Parser, compiler::Compiler, eval::ArrayObj, lexer::Lexer};
-use std::rc::Rc;
+use crate::{
+    ast::Parser,
+    compiler::Compiler,
+    eval::{ArrayObj, HashObj},
+    lexer::Lexer,
+};
+use std::{collections::HashMap, rc::Rc};
 
 macro_rules! test {
     ($($case:expr),* $(,)?) => {
@@ -127,6 +132,38 @@ fn arrays() {
                     Rc::new(Object::Integer(12)),
                     Rc::new(Object::Integer(11)),
                 ]
+            })
+        ),
+    )
+}
+
+#[test]
+fn hashes() {
+    test!(
+        (
+            "{}",
+            Object::Hash(HashObj {
+                map: HashMap::new()
+            })
+        ),
+        (
+            "{1: 2, 2: 3}",
+            Object::Hash(HashObj {
+                map: [
+                    (Rc::new(Object::Integer(1)), Rc::new(Object::Integer(2))),
+                    (Rc::new(Object::Integer(2)), Rc::new(Object::Integer(3))),
+                ]
+                .into()
+            })
+        ),
+        (
+            "{1 + 1: 2 * 2, 3 + 3: 4 * 4}",
+            Object::Hash(HashObj {
+                map: [
+                    (Rc::new(Object::Integer(2)), Rc::new(Object::Integer(4))),
+                    (Rc::new(Object::Integer(6)), Rc::new(Object::Integer(16))),
+                ]
+                .into()
             })
         ),
     )
