@@ -4,43 +4,65 @@ use std::rc::Rc;
 
 use crate::{
     compiler::{Bytecode, Bytes, OpCode},
-    eval::Object,
+    eval::{CompiledFuncObj, Object},
 };
 
 const STACK_SIZE: usize = 2048;
 const GLOBALS_SIZE: usize = 0xFFFF;
 
+struct Frame {
+    func: Rc<CompiledFuncObj>,
+    ip: usize,
+}
+
 pub struct Vm {
-    instructions: Bytes,
     constants: Vec<Object>,
 
     globals: Vec<Object>,
     stack: Box<[Object; STACK_SIZE]>,
     /// Points to next value. Top of stack is at sp - 1
     sp: usize,
+
+    frames: Vec<Frame>,
 }
 
 impl Vm {
     pub fn new(b: Bytecode) -> Self {
+        let frame = Frame {
+            func: Rc::new(CompiledFuncObj {
+                instructions: b.instructions,
+            }),
+            ip: 0,
+        };
         Vm {
-            instructions: b.instructions,
+            // instructions: b.instructions,
             constants: b.constants,
 
             globals: vec![Object::Null; GLOBALS_SIZE],
             stack: vec![Object::Null; STACK_SIZE].try_into().unwrap(),
             sp: 0,
+
+            frames: vec![frame],
         }
     }
 
     pub fn new_with_state(b: Bytecode, globals: Vec<Object>) -> Self {
         assert_eq!(globals.len(), GLOBALS_SIZE);
 
+        let frame = Frame {
+            func: Rc::new(CompiledFuncObj {
+                instructions: b.instructions,
+            }),
+            ip: 0,
+        };
+
         Self {
-            instructions: b.instructions,
             constants: b.constants,
             globals,
             stack: vec![Object::Null; STACK_SIZE].try_into().unwrap(),
             sp: 0,
+
+            frames: vec![frame],
         }
     }
 
@@ -49,16 +71,14 @@ impl Vm {
     }
 
     pub fn run(&mut self) -> RunResult {
-        let mut ip = 0;
-
-        while ip < self.instructions.len() {
-            let op: OpCode = self.instructions.read(ip);
-            ip += 1;
+        while self.ip() < self.instructions().len() {
+            let op: OpCode = self.instructions().read(self.ip());
+            *self.ip_mut() += 1;
 
             match op {
                 OpCode::Constant => {
-                    let const_idx: u16 = self.instructions.read(ip);
-                    ip += 2;
+                    let const_idx: u16 = self.instructions().read(self.ip());
+                    *self.ip_mut() += 2;
                     self.push(self.constants[const_idx as usize].clone())?;
                 }
                 OpCode::Add
@@ -85,34 +105,34 @@ impl Vm {
                     self.push(Object::Bool(!right.is_truthy()))?
                 }
                 OpCode::JumpNotTrue => {
-                    let jmp_to: u16 = self.instructions.read(ip);
-                    ip += 2;
+                    let jmp_to: u16 = self.instructions().read(self.ip());
+                    *self.ip_mut() += 2;
 
                     let cond = self.pop();
                     if !cond.is_truthy() {
-                        ip = jmp_to as usize;
+                        *self.ip_mut() = jmp_to as usize;
                     }
                 }
                 OpCode::Jump => {
-                    let jmp_to: u16 = self.instructions.read(ip);
-                    ip = jmp_to as usize;
+                    let jmp_to: u16 = self.instructions().read(self.ip());
+                    *self.ip_mut() = jmp_to as usize;
                 }
                 OpCode::SetGlobal => {
-                    let idx: u16 = self.instructions.read(ip);
-                    ip += 2;
+                    let idx: u16 = self.instructions().read(self.ip());
+                    *self.ip_mut() += 2;
 
                     self.globals[idx as usize] = self.pop();
                 }
                 OpCode::GetGlobal => {
-                    let idx: u16 = self.instructions.read(ip);
-                    ip += 2;
+                    let idx: u16 = self.instructions().read(self.ip());
+                    *self.ip_mut() += 2;
 
                     self.push(self.globals[idx as usize].clone())?
                 }
                 OpCode::Array => {
-                    let len: u16 = self.instructions.read(ip);
+                    let len: u16 = self.instructions().read(self.ip());
                     let len = len as usize;
-                    ip += 2;
+                    *self.ip_mut() += 2;
 
                     let mut arr = vec![Object::Null.into(); len];
                     for i in (0..len).rev() {
@@ -122,9 +142,9 @@ impl Vm {
                     self.push(Object::Array(crate::eval::ArrayObj { elements: arr }))?
                 }
                 OpCode::Hash => {
-                    let len: u16 = self.instructions.read(ip);
+                    let len: u16 = self.instructions().read(self.ip());
                     let len = len as usize;
-                    ip += 2;
+                    *self.ip_mut() += 2;
 
                     let mut pairs = vec![];
                     for _ in 0..len {
@@ -140,6 +160,27 @@ impl Vm {
                     let index = self.pop();
                     let left = self.pop();
                     self.execute_index_op(left, index)?;
+                }
+                OpCode::Call => {
+                    let func = match self.stack_top().expect("nothing to call") {
+                        Object::CompiledFunc(c) => c.clone(),
+                        o => return Err(format!("cannot call object {:?}", o)),
+                    };
+                    self.push_frame(Frame { func, ip: 0 })
+                }
+                OpCode::ReturnValue => {
+                    let val = self.pop();
+
+                    self.pop_frame();
+                    self.pop();
+
+                    self.push(val)?;
+                }
+                OpCode::Return => {
+                    self.pop_frame();
+                    self.pop();
+
+                    self.push(Object::Null)?;
                 }
                 _ => todo!(),
             }
@@ -245,6 +286,39 @@ impl Vm {
                 right.kind()
             )),
         }
+    }
+
+    fn push_frame(&mut self, frame: Frame) {
+        self.frames.push(frame);
+    }
+
+    fn pop_frame(&mut self) -> Frame {
+        assert!(self.frames.len() > 1, "Cannot leave out of main frame");
+        self.frames.pop().unwrap()
+    }
+
+    fn instructions(&self) -> &Bytes {
+        &self.frame().func.instructions
+    }
+
+    fn ip(&self) -> usize {
+        self.frame().ip
+    }
+
+    fn ip_mut(&mut self) -> &mut usize {
+        &mut self.frame_mut().ip
+    }
+
+    fn frame(&self) -> &Frame {
+        self.frames
+            .last()
+            .expect("There should always exist at least one frame")
+    }
+
+    fn frame_mut(&mut self) -> &mut Frame {
+        self.frames
+            .last_mut()
+            .expect("There should always exist at least one frame")
     }
 }
 

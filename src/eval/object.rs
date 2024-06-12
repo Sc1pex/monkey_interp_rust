@@ -10,7 +10,7 @@ pub enum Object {
 
     Return(Rc<Object>),
     Func(FuncObj),
-    CompiledFunc(CompiledFuncObj),
+    CompiledFunc(Rc<CompiledFuncObj>),
     Builtin(Builtin),
     Array(ArrayObj),
     Hash(HashObj),

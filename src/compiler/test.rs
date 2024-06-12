@@ -399,7 +399,7 @@ fn functions() {
             &[
                 Object::Integer(10),
                 Object::Integer(5),
-                Object::CompiledFunc(CompiledFuncObj {
+                Object::CompiledFunc(Rc::new(CompiledFuncObj {
                     instructions: [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::Constant, &[2]),
@@ -411,7 +411,7 @@ fn functions() {
                         b.push(i);
                         b
                     }),
-                })
+                }))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[3]),
@@ -423,7 +423,7 @@ fn functions() {
             &[
                 Object::Integer(10),
                 Object::Integer(5),
-                Object::CompiledFunc(CompiledFuncObj {
+                Object::CompiledFunc(Rc::new(CompiledFuncObj {
                     instructions: [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::Constant, &[2]),
@@ -435,7 +435,7 @@ fn functions() {
                         b.push(i);
                         b
                     }),
-                })
+                }))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[3]),
@@ -447,7 +447,7 @@ fn functions() {
             &[
                 Object::Integer(10),
                 Object::Integer(5),
-                Object::CompiledFunc(CompiledFuncObj {
+                Object::CompiledFunc(Rc::new(CompiledFuncObj {
                     instructions: [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::Pop, &[]),
@@ -459,7 +459,7 @@ fn functions() {
                         b.push(i);
                         b
                     }),
-                })
+                }))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[3]),
@@ -468,7 +468,7 @@ fn functions() {
         ),
         (
             "fn() {}",
-            &[Object::CompiledFunc(CompiledFuncObj {
+            &[Object::CompiledFunc(Rc::new(CompiledFuncObj {
                 instructions: [Instruction::new(OpCode::Return, &[]),].into_iter().fold(
                     Bytes::default(),
                     |mut b, i| {
@@ -476,7 +476,7 @@ fn functions() {
                         b
                     }
                 ),
-            })],
+            }))],
             &[
                 Instruction::new(OpCode::Constant, &[1]),
                 Instruction::new(OpCode::Pop, &[]),
@@ -493,7 +493,7 @@ fn function_calls() {
             &[
                 Object::Integer(10),
                 Object::Integer(5),
-                Object::CompiledFunc(CompiledFuncObj {
+                Object::CompiledFunc(Rc::new(CompiledFuncObj {
                     instructions: [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::Constant, &[2]),
@@ -505,7 +505,7 @@ fn function_calls() {
                         b.push(i);
                         b
                     }),
-                })
+                }))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[3]),
@@ -520,7 +520,7 @@ fn function_calls() {
             "#,
             &[
                 Object::Integer(24),
-                Object::CompiledFunc(CompiledFuncObj {
+                Object::CompiledFunc(Rc::new(CompiledFuncObj {
                     instructions: [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::ReturnValue, &[]),
@@ -530,7 +530,7 @@ fn function_calls() {
                         b.push(i);
                         b
                     }),
-                })
+                }))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[2]),

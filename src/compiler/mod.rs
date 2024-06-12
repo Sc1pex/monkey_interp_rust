@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::rc::Rc;
+
 use crate::{ast::*, eval::Object, lexer::TokenType};
 
 pub use code::Bytes;
@@ -206,11 +208,9 @@ impl Compiler {
         }
         let body = self.leave_scope().instructions;
 
-        Ok(
-            self.add_constant(Object::CompiledFunc(crate::eval::CompiledFuncObj {
-                instructions: body,
-            })) as u32,
-        )
+        Ok(self.add_constant(Object::CompiledFunc(Rc::new(
+            crate::eval::CompiledFuncObj { instructions: body },
+        ))) as u32)
     }
 
     fn add_constant(&mut self, obj: Object) -> usize {

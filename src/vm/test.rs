@@ -188,6 +188,72 @@ fn index() {
     )
 }
 
+#[test]
+fn functions() {
+    test!(
+        (
+            r#"
+            let a = fn() { 10 + 5}; 
+            a() "#,
+            Object::Integer(15)
+        ),
+        (
+            r#"
+            let one = fn() { 1; };
+            let two = fn() { 2; };
+            one() + two() "#,
+            Object::Integer(3)
+        ),
+        (
+            r#"
+            let a = fn() { 1 };
+            let b = fn() { a() + 1 };
+            fn(){ b() + 1 }()"#,
+            Object::Integer(3)
+        ),
+    )
+}
+
+#[test]
+fn functions_return() {
+    test!((
+        r#"
+        let a = fn() {return 20; return 40;}; 
+        a() "#,
+        Object::Integer(20)
+    ))
+}
+
+#[test]
+fn functions_no_return() {
+    test!(
+        (
+            r#"
+            let a = fn(){}; 
+            a() "#,
+            Object::Null
+        ),
+        (
+            r#"
+            let a = fn(){}; 
+            let b = fn(){ a() }; 
+            b() "#,
+            Object::Null
+        )
+    )
+}
+
+#[test]
+fn higher_oreder_funcs() {
+    test!((
+        r#"
+        let returnsOne = fn() { 1; };
+        let returnsOneReturner = fn() { returnsOne; };
+        returnsOneReturner()(); "#,
+        Object::Integer(1)
+    ))
+}
+
 fn test(cases: &[(&str, Object)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());
