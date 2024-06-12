@@ -89,6 +89,7 @@ impl Display for FuncObj {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CompiledFuncObj {
     pub instructions: Bytes,
+    pub locals: usize,
 }
 
 impl Display for CompiledFuncObj {

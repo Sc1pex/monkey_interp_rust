@@ -45,6 +45,10 @@ impl Display for Bytes {
 
             for w in def.operands {
                 match w {
+                    1 => {
+                        let operand = self.data[idx];
+                        write!(f, " {}", operand)?;
+                    }
                     2 => {
                         let operand: [u8; 2] = self.data[idx..(idx + 2)]
                             .try_into()
@@ -116,6 +120,7 @@ mod test {
         let instrs = [
             Instruction::new(OpCode::Add, &[]),
             Instruction::new(OpCode::Constant, &[2]),
+            Instruction::new(OpCode::GetLocal, &[3]),
             Instruction::new(OpCode::Constant, &[65534]),
         ];
 
@@ -126,7 +131,8 @@ mod test {
 
         let expected = r#"0000 OpAdd
 0001 OpConstant 2
-0004 OpConstant 65534
+0004 OpGetLocal 3
+0006 OpConstant 65534
 "#;
 
         assert_eq!(expected, bytes.to_string());

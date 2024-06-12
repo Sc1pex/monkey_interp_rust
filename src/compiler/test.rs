@@ -411,6 +411,7 @@ fn functions() {
                         b.push(i);
                         b
                     }),
+                    locals: 0,
                 }))
             ],
             &[
@@ -435,6 +436,7 @@ fn functions() {
                         b.push(i);
                         b
                     }),
+                    locals: 0,
                 }))
             ],
             &[
@@ -459,6 +461,7 @@ fn functions() {
                         b.push(i);
                         b
                     }),
+                    locals: 0,
                 }))
             ],
             &[
@@ -476,6 +479,7 @@ fn functions() {
                         b
                     }
                 ),
+                locals: 0,
             }))],
             &[
                 Instruction::new(OpCode::Constant, &[1]),
@@ -505,6 +509,7 @@ fn function_calls() {
                         b.push(i);
                         b
                     }),
+                    locals: 0,
                 }))
             ],
             &[
@@ -530,6 +535,7 @@ fn function_calls() {
                         b.push(i);
                         b
                     }),
+                    locals: 0,
                 }))
             ],
             &[
@@ -537,6 +543,66 @@ fn function_calls() {
                 Instruction::new(OpCode::SetGlobal, &[0]),
                 Instruction::new(OpCode::GetGlobal, &[0]),
                 Instruction::new(OpCode::Call, &[]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+    )
+}
+
+#[test]
+fn function_scopes() {
+    test!(
+        (
+            r#"
+            let num = 55;
+            fn() { num } "#,
+            &[
+                Object::Integer(55),
+                Object::CompiledFunc(Rc::new(CompiledFuncObj {
+                    instructions: [
+                        Instruction::new(OpCode::GetGlobal, &[0]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                    locals: 0,
+                }))
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::SetGlobal, &[0]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            r#"
+            fn() {
+                let num = 55;
+                num
+            } "#,
+            &[
+                Object::Integer(55),
+                Object::CompiledFunc(Rc::new(CompiledFuncObj {
+                    instructions: [
+                        Instruction::new(OpCode::Constant, &[1]),
+                        Instruction::new(OpCode::SetLocal, &[0]),
+                        Instruction::new(OpCode::GetLocal, &[0]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                    locals: 1,
+                }))
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[2]),
                 Instruction::new(OpCode::Pop, &[]),
             ]
         ),
@@ -569,7 +635,7 @@ fn test(cases: &[(&str, &[Object], &[Instruction])]) {
             &bytecode.constants[1..] == *consts,
             "Wrong constants. expected:\n{}got:\n{}",
             print_objs(consts),
-            print_objs(&bytecode.constants),
+            print_objs(&bytecode.constants[1..]),
         );
     }
 }

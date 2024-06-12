@@ -23,6 +23,8 @@ pub enum OpCode {
 
     SetGlobal,
     GetGlobal,
+    SetLocal,
+    GetLocal,
 
     Array,
     Hash,
@@ -37,6 +39,7 @@ impl OpCode {
     pub fn def(&self) -> Definition {
         match self {
             OpCode::Constant => Definition::new("OpConstant", &[2]),
+
             OpCode::Add => Definition::new("OpAdd", &[]),
             OpCode::Pop => Definition::new("OpPop", &[]),
             OpCode::Sub => Definition::new("OpSub", &[]),
@@ -49,13 +52,19 @@ impl OpCode {
             OpCode::Greater => Definition::new("OpGreater", &[]),
             OpCode::Bang => Definition::new("OpBang", &[]),
             OpCode::Minus => Definition::new("OpMinus", &[]),
+
             OpCode::Jump => Definition::new("OpJump", &[2]),
             OpCode::JumpNotTrue => Definition::new("OpJumpNotTrue", &[2]),
+
             OpCode::SetGlobal => Definition::new("OpSetGlobal", &[2]),
             OpCode::GetGlobal => Definition::new("OpGetGlobal", &[2]),
+            OpCode::SetLocal => Definition::new("OpSetLocal", &[1]),
+            OpCode::GetLocal => Definition::new("OpGetLocal", &[1]),
+
             OpCode::Array => Definition::new("OpArray", &[2]),
             OpCode::Hash => Definition::new("OpHash", &[2]),
             OpCode::Index => Definition::new("OpIndex", &[]),
+
             OpCode::Call => Definition::new("OpCall", &[]),
             OpCode::ReturnValue => Definition::new("OpReturnValue", &[]),
             OpCode::Return => Definition::new("OpReturn", &[]),
@@ -136,6 +145,10 @@ impl BytesWrite for &Instruction {
         b.push(self.op);
         for (width, operand) in def.operands.iter().zip(&self.operands) {
             match width {
+                1 => {
+                    let operand = *operand as u8;
+                    b.push(operand);
+                }
                 2 => {
                     let operand = *operand as u16;
                     b.push(operand);

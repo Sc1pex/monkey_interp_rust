@@ -245,13 +245,70 @@ fn functions_no_return() {
 
 #[test]
 fn higher_oreder_funcs() {
-    test!((
-        r#"
-        let returnsOne = fn() { 1; };
-        let returnsOneReturner = fn() { returnsOne; };
-        returnsOneReturner()(); "#,
-        Object::Integer(1)
-    ))
+    test!(
+        (
+            r#"
+            let returnsOne = fn() { 1; };
+            let returnsOneReturner = fn() { returnsOne; };
+            returnsOneReturner()(); "#,
+            Object::Integer(1)
+        ),
+        (
+            r#"
+            let returnsOneReturner = fn() {
+                let returnsOne = fn() { 1; };
+                returnsOne;
+            };
+            returnsOneReturner()(); "#,
+            Object::Integer(1)
+        )
+    )
+}
+
+#[test]
+fn funcs_with_bindings() {
+    test!(
+        (
+            r#"
+            let one = fn() { let one =  1; one}
+            one(); "#,
+            Object::Integer(1)
+        ),
+        (
+            r#"
+            let oneAndTwo = fn() { let one = 1; let two = 2; one + two; };
+            oneAndTwo(); "#,
+            Object::Integer(3)
+        ),
+        (
+            r#"
+            let oneAndTwo = fn() { let one = 1; let two = 2; one + two; };
+            let threeAndFour = fn() { let three = 3; let four = 4; three + four; };
+            oneAndTwo() + threeAndFour(); "#,
+            Object::Integer(10)
+        ),
+        (
+            r#"
+            let firstFoobar = fn() { let foobar = 50; foobar; };
+            let secondFoobar = fn() { let foobar = 100; foobar; };
+            firstFoobar() + secondFoobar(); "#,
+            Object::Integer(150)
+        ),
+        (
+            r#"
+            let globalSeed = 50;
+            let minusOne = fn() {
+                let num = 1;
+                globalSeed - num;
+            }
+            let minusTwo = fn() {
+                let num = 2;
+                globalSeed - num;
+            }
+            minusOne() + minusTwo();  "#,
+            Object::Integer(97)
+        ),
+    )
 }
 
 fn test(cases: &[(&str, Object)]) {
@@ -264,6 +321,10 @@ fn test(cases: &[(&str, Object)]) {
         compiler.compile(program).expect("Skill issue");
         let bytecode = compiler.bytecode();
         let s = format!("{}", bytecode.instructions);
+        println!("{}", s);
+        for c in &bytecode.constants {
+            println!("{}", c);
+        }
 
         let mut vm = Vm::new(bytecode);
         vm.run().unwrap();

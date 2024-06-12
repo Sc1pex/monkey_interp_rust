@@ -1,6 +1,6 @@
 use crate::{
     ast::Parser,
-    compiler::{Compiler, SymbolTable},
+    compiler::{Compiler, SymbolTableRef},
     eval::Object,
     lexer::Lexer,
     vm::Vm,
@@ -20,7 +20,7 @@ pub fn start() {
 }
 
 fn run(
-    comp_state: &mut Option<(SymbolTable, Vec<Object>)>,
+    comp_state: &mut Option<(SymbolTableRef, Vec<Object>)>,
     vm_state: &mut Option<Vec<Object>>,
 ) -> Result<Object, String> {
     print!("> ");

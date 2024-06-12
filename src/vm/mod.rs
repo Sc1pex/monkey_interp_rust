@@ -13,6 +13,7 @@ const GLOBALS_SIZE: usize = 0xFFFF;
 struct Frame {
     func: Rc<CompiledFuncObj>,
     ip: usize,
+    sp: usize,
 }
 
 pub struct Vm {
@@ -31,8 +32,10 @@ impl Vm {
         let frame = Frame {
             func: Rc::new(CompiledFuncObj {
                 instructions: b.instructions,
+                locals: 0,
             }),
             ip: 0,
+            sp: 0,
         };
         Vm {
             // instructions: b.instructions,
@@ -52,8 +55,10 @@ impl Vm {
         let frame = Frame {
             func: Rc::new(CompiledFuncObj {
                 instructions: b.instructions,
+                locals: 0,
             }),
             ip: 0,
+            sp: 0,
         };
 
         Self {
@@ -166,21 +171,36 @@ impl Vm {
                         Object::CompiledFunc(c) => c.clone(),
                         o => return Err(format!("cannot call object {:?}", o)),
                     };
-                    self.push_frame(Frame { func, ip: 0 })
+                    let locals = func.locals;
+                    self.push_frame(Frame {
+                        func,
+                        ip: 0,
+                        sp: self.sp,
+                    });
+                    self.sp += locals;
                 }
                 OpCode::ReturnValue => {
                     let val = self.pop();
-
-                    self.pop_frame();
-                    self.pop();
-
+                    self.sp = self.pop_frame().sp - 1;
                     self.push(val)?;
                 }
                 OpCode::Return => {
-                    self.pop_frame();
-                    self.pop();
-
+                    self.sp = self.pop_frame().sp - 1;
                     self.push(Object::Null)?;
+                }
+                OpCode::SetLocal => {
+                    let idx: u8 = self.instructions().read(self.ip());
+                    *self.ip_mut() += 1;
+
+                    let val = self.pop();
+                    self.stack[self.frame().sp + idx as usize] = val;
+                }
+                OpCode::GetLocal => {
+                    let idx: u8 = self.instructions().read(self.ip());
+                    *self.ip_mut() += 1;
+
+                    let val = self.stack[self.frame().sp + idx as usize].clone();
+                    self.push(val)?;
                 }
                 _ => todo!(),
             }

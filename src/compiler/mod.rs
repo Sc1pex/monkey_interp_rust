@@ -6,7 +6,7 @@ use crate::{ast::*, eval::Object, lexer::TokenType};
 
 pub use code::Bytes;
 pub use instructions::{Instruction, OpCode};
-pub use symbol_table::SymbolTable;
+pub use symbol_table::*;
 
 mod code;
 mod instructions;
@@ -22,7 +22,7 @@ struct Scope {
 
 pub struct Compiler {
     constants: Vec<Object>,
-    symbol_table: SymbolTable,
+    symbol_table: SymbolTableRef,
     scopes: Vec<Scope>,
 }
 
@@ -30,7 +30,7 @@ impl Default for Compiler {
     fn default() -> Self {
         Self {
             constants: vec![Object::Null],
-            symbol_table: SymbolTable::default(),
+            symbol_table: SymbolTable::empty(),
             scopes: vec![Scope::default()],
         }
     }
@@ -49,7 +49,7 @@ pub struct Bytecode {
 }
 
 impl Compiler {
-    pub fn new_with_state(symbol_table: SymbolTable, constants: Vec<Object>) -> Self {
+    pub fn new_with_state(symbol_table: SymbolTableRef, constants: Vec<Object>) -> Self {
         Self {
             symbol_table,
             constants,
@@ -57,7 +57,7 @@ impl Compiler {
         }
     }
 
-    pub fn state(&self) -> (SymbolTable, Vec<Object>) {
+    pub fn state(&self) -> (SymbolTableRef, Vec<Object>) {
         (self.symbol_table.clone(), self.constants.clone())
     }
 
@@ -78,8 +78,15 @@ impl Compiler {
         match stmt {
             Statement::Let(l) => {
                 self.compile_expr(l.expr)?;
-                let sym = self.symbol_table.define(&l.ident);
-                self.emit(Instruction::new(OpCode::SetGlobal, &[sym.index as u32]));
+                let sym = self.symbol_table.borrow_mut().define(&l.ident);
+                match sym.scope {
+                    symbol_table::Scope::Global => {
+                        self.emit(Instruction::new(OpCode::SetGlobal, &[sym.index as u32]))
+                    }
+                    symbol_table::Scope::Local => {
+                        self.emit(Instruction::new(OpCode::SetLocal, &[sym.index as u32]))
+                    }
+                };
                 Ok(())
             }
             Statement::Return(r) => {
@@ -100,9 +107,18 @@ impl Compiler {
             Expression::Ident(i) => {
                 let sym = self
                     .symbol_table
+                    .borrow()
                     .resolve(&i)
                     .ok_or(format!("undefined symbol: {}", i))?;
-                self.emit(Instruction::new(OpCode::GetGlobal, &[sym.index as u32]));
+
+                match sym.scope {
+                    symbol_table::Scope::Global => {
+                        self.emit(Instruction::new(OpCode::GetGlobal, &[sym.index as u32]));
+                    }
+                    symbol_table::Scope::Local => {
+                        self.emit(Instruction::new(OpCode::GetLocal, &[sym.index as u32]));
+                    }
+                };
             }
             Expression::Number(x) => {
                 let obj = Object::Integer(x);
@@ -206,10 +222,14 @@ impl Compiler {
         if !self.last_is(OpCode::ReturnValue) {
             self.emit(Instruction::new(OpCode::Return, &[]));
         }
+        let locals = self.symbol_table.borrow().symbols();
         let body = self.leave_scope().instructions;
 
         Ok(self.add_constant(Object::CompiledFunc(Rc::new(
-            crate::eval::CompiledFuncObj { instructions: body },
+            crate::eval::CompiledFuncObj {
+                instructions: body,
+                locals,
+            },
         ))) as u32)
     }
 
@@ -294,9 +314,13 @@ impl Compiler {
 
     fn enter_scope(&mut self) {
         self.scopes.push(Scope::default());
+        self.symbol_table = SymbolTable::new_enclosed(&self.symbol_table);
     }
 
     fn leave_scope(&mut self) -> Scope {
+        let s = self.symbol_table.borrow_mut().outer.take();
+        self.symbol_table = s.expect("Cannot leave out of global symbol table");
+
         assert!(self.scopes.len() > 1, "Cannot leave out of main scope");
         self.scopes.pop().unwrap()
     }
