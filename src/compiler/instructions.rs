@@ -141,6 +141,14 @@ impl BytesWrite for Instruction {
 impl BytesWrite for &Instruction {
     fn write(&self, b: &mut Bytes) {
         let def = self.op.def();
+        assert_eq!(
+            def.operands.len(),
+            self.operands.len(),
+            "{} takes {} opcodes, but {} were given",
+            def.name,
+            def.operands.len(),
+            self.operands.len()
+        );
 
         b.push(self.op);
         for (width, operand) in def.operands.iter().zip(&self.operands) {
