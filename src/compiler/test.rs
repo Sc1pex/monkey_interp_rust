@@ -485,6 +485,64 @@ fn functions() {
     )
 }
 
+#[test]
+fn function_calls() {
+    test!(
+        (
+            "fn() { 10 + 5 }()",
+            &[
+                Object::Integer(10),
+                Object::Integer(5),
+                Object::CompiledFunc(CompiledFuncObj {
+                    instructions: [
+                        Instruction::new(OpCode::Constant, &[1]),
+                        Instruction::new(OpCode::Constant, &[2]),
+                        Instruction::new(OpCode::Add, &[]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                })
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Call, &[]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            r#"
+            let noArg = fn() { 24 };
+            noArg();
+            "#,
+            &[
+                Object::Integer(24),
+                Object::CompiledFunc(CompiledFuncObj {
+                    instructions: [
+                        Instruction::new(OpCode::Constant, &[1]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                })
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::SetGlobal, &[0]),
+                Instruction::new(OpCode::GetGlobal, &[0]),
+                Instruction::new(OpCode::Call, &[]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+    )
+}
+
 fn test(cases: &[(&str, &[Object], &[Instruction])]) {
     for (input, consts, instrs) in cases {
         let lexer = Lexer::new(input.to_string());

@@ -153,23 +153,13 @@ impl Compiler {
                 )
             }
             Expression::Func(f) => {
-                self.enter_scope();
-                self.compile_block(f.body)?;
-                if self.last_is(OpCode::Pop) {
-                    self.remove_last();
-                    self.emit(Instruction::new(OpCode::ReturnValue, &[]));
-                }
-                if !self.last_is(OpCode::ReturnValue) {
-                    self.emit(Instruction::new(OpCode::Return, &[]));
-                }
-                let body = self.leave_scope().instructions;
-
-                let idx = self.add_constant(Object::CompiledFunc(crate::eval::CompiledFuncObj {
-                    instructions: body,
-                })) as u32;
+                let idx = self.compile_func(f.body)?;
                 self.emit(Instruction::new(OpCode::Constant, &[idx]));
             }
-            Expression::Call(_) => todo!(),
+            Expression::Call(c) => {
+                self.compile_expr(*c.func)?;
+                self.emit(Instruction::new(OpCode::Call, &[]));
+            }
             Expression::Array(a) => {
                 let len = a.elements.len();
                 for e in a.elements {
@@ -202,6 +192,25 @@ impl Compiler {
             self.compile_stmt(stmt)?;
         }
         Ok(())
+    }
+
+    fn compile_func(&mut self, body: Vec<Statement>) -> Result<u32, String> {
+        self.enter_scope();
+        self.compile_block(body)?;
+        if self.last_is(OpCode::Pop) {
+            self.remove_last();
+            self.emit(Instruction::new(OpCode::ReturnValue, &[]));
+        }
+        if !self.last_is(OpCode::ReturnValue) {
+            self.emit(Instruction::new(OpCode::Return, &[]));
+        }
+        let body = self.leave_scope().instructions;
+
+        Ok(
+            self.add_constant(Object::CompiledFunc(crate::eval::CompiledFuncObj {
+                instructions: body,
+            })) as u32,
+        )
     }
 
     fn add_constant(&mut self, obj: Object) -> usize {
