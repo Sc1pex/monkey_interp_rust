@@ -90,11 +90,22 @@ impl Display for FuncObj {
 pub struct CompiledFuncObj {
     pub instructions: Bytes,
     pub locals: usize,
+    pub params: usize,
+}
+
+impl CompiledFuncObj {
+    pub fn new(instructions: Bytes, locals: usize, params: usize) -> Self {
+        Self {
+            instructions,
+            locals,
+            params,
+        }
+    }
 }
 
 impl Display for CompiledFuncObj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, " {}", self.instructions)
+        write!(f, " {} {} locals", self.instructions, self.locals)
     }
 }
 

@@ -33,6 +33,7 @@ impl Vm {
             func: Rc::new(CompiledFuncObj {
                 instructions: b.instructions,
                 locals: 0,
+                params: 0,
             }),
             ip: 0,
             sp: 0,
@@ -56,6 +57,7 @@ impl Vm {
             func: Rc::new(CompiledFuncObj {
                 instructions: b.instructions,
                 locals: 0,
+                params: 0,
             }),
             ip: 0,
             sp: 0,
@@ -167,15 +169,28 @@ impl Vm {
                     self.execute_index_op(left, index)?;
                 }
                 OpCode::Call => {
-                    let func = match self.stack_top().expect("nothing to call") {
+                    let args: u8 = self.instructions().read(self.ip());
+                    *self.ip_mut() += 1;
+
+                    let func = match self
+                        .stack
+                        .get(self.sp - 1 - args as usize)
+                        .expect("nothing to call")
+                    {
                         Object::CompiledFunc(c) => c.clone(),
                         o => return Err(format!("cannot call object {:?}", o)),
                     };
+                    if args as usize != func.params {
+                        return Err(format!(
+                            "wrong number of arguments. expected {}, got {}",
+                            func.params, args
+                        ));
+                    }
                     let locals = func.locals;
                     self.push_frame(Frame {
                         func,
                         ip: 0,
-                        sp: self.sp,
+                        sp: self.sp - args as usize,
                     });
                     self.sp += locals;
                 }

@@ -65,7 +65,7 @@ impl OpCode {
             OpCode::Hash => Definition::new("OpHash", &[2]),
             OpCode::Index => Definition::new("OpIndex", &[]),
 
-            OpCode::Call => Definition::new("OpCall", &[]),
+            OpCode::Call => Definition::new("OpCall", &[1]),
             OpCode::ReturnValue => Definition::new("OpReturnValue", &[]),
             OpCode::Return => Definition::new("OpReturn", &[]),
         }

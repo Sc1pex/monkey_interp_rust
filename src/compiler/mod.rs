@@ -171,12 +171,16 @@ impl Compiler {
                 )
             }
             Expression::Func(f) => {
-                let idx = self.compile_func(f.body)?;
+                let idx = self.compile_func(f)?;
                 self.emit(Instruction::new(OpCode::Constant, &[idx]));
             }
             Expression::Call(c) => {
                 self.compile_expr(*c.func)?;
-                self.emit(Instruction::new(OpCode::Call, &[]));
+                let args = c.arguments.len();
+                for arg in c.arguments {
+                    self.compile_expr(arg)?;
+                }
+                self.emit(Instruction::new(OpCode::Call, &[args as u32]));
             }
             Expression::Array(a) => {
                 let len = a.elements.len();
@@ -212,8 +216,13 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_func(&mut self, body: Vec<Statement>) -> Result<u32, String> {
+    fn compile_func(&mut self, FuncExpr { params, body }: FuncExpr) -> Result<u32, String> {
         self.enter_scope();
+
+        for p in &params {
+            self.symbol_table.borrow_mut().define(p);
+        }
+
         self.compile_block(body)?;
         if self.last_is(OpCode::Pop) {
             self.remove_last();
@@ -229,6 +238,7 @@ impl Compiler {
             crate::eval::CompiledFuncObj {
                 instructions: body,
                 locals,
+                params: params.len(),
             },
         ))) as u32)
     }

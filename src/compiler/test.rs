@@ -399,8 +399,8 @@ fn functions() {
             &[
                 Object::Integer(10),
                 Object::Integer(5),
-                Object::CompiledFunc(Rc::new(CompiledFuncObj {
-                    instructions: [
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::Constant, &[2]),
                         Instruction::new(OpCode::Add, &[]),
@@ -411,8 +411,9 @@ fn functions() {
                         b.push(i);
                         b
                     }),
-                    locals: 0,
-                }))
+                    0,
+                    0,
+                )))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[3]),
@@ -424,8 +425,8 @@ fn functions() {
             &[
                 Object::Integer(10),
                 Object::Integer(5),
-                Object::CompiledFunc(Rc::new(CompiledFuncObj {
-                    instructions: [
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::Constant, &[2]),
                         Instruction::new(OpCode::Add, &[]),
@@ -436,8 +437,9 @@ fn functions() {
                         b.push(i);
                         b
                     }),
-                    locals: 0,
-                }))
+                    0,
+                    0,
+                )))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[3]),
@@ -449,8 +451,8 @@ fn functions() {
             &[
                 Object::Integer(10),
                 Object::Integer(5),
-                Object::CompiledFunc(Rc::new(CompiledFuncObj {
-                    instructions: [
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::Pop, &[]),
                         Instruction::new(OpCode::Constant, &[2]),
@@ -461,8 +463,9 @@ fn functions() {
                         b.push(i);
                         b
                     }),
-                    locals: 0,
-                }))
+                    0,
+                    0,
+                )))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[3]),
@@ -471,16 +474,17 @@ fn functions() {
         ),
         (
             "fn() {}",
-            &[Object::CompiledFunc(Rc::new(CompiledFuncObj {
-                instructions: [Instruction::new(OpCode::Return, &[]),].into_iter().fold(
+            &[Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                [Instruction::new(OpCode::Return, &[]),].into_iter().fold(
                     Bytes::default(),
                     |mut b, i| {
                         b.push(i);
                         b
                     }
                 ),
-                locals: 0,
-            }))],
+                0,
+                0,
+            )))],
             &[
                 Instruction::new(OpCode::Constant, &[1]),
                 Instruction::new(OpCode::Pop, &[]),
@@ -497,8 +501,8 @@ fn function_calls() {
             &[
                 Object::Integer(10),
                 Object::Integer(5),
-                Object::CompiledFunc(Rc::new(CompiledFuncObj {
-                    instructions: [
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::Constant, &[2]),
                         Instruction::new(OpCode::Add, &[]),
@@ -509,12 +513,13 @@ fn function_calls() {
                         b.push(i);
                         b
                     }),
-                    locals: 0,
-                }))
+                    0,
+                    0,
+                )))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[3]),
-                Instruction::new(OpCode::Call, &[]),
+                Instruction::new(OpCode::Call, &[0]),
                 Instruction::new(OpCode::Pop, &[]),
             ]
         ),
@@ -525,8 +530,8 @@ fn function_calls() {
             "#,
             &[
                 Object::Integer(24),
-                Object::CompiledFunc(Rc::new(CompiledFuncObj {
-                    instructions: [
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::ReturnValue, &[]),
                     ]
@@ -535,14 +540,81 @@ fn function_calls() {
                         b.push(i);
                         b
                     }),
-                    locals: 0,
-                }))
+                    0,
+                    0,
+                )))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[2]),
                 Instruction::new(OpCode::SetGlobal, &[0]),
                 Instruction::new(OpCode::GetGlobal, &[0]),
-                Instruction::new(OpCode::Call, &[]),
+                Instruction::new(OpCode::Call, &[0]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            r#"
+            let oneArg = fn(a) { a; };
+            oneArg(24); "#,
+            &[
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
+                        Instruction::new(OpCode::GetLocal, &[0]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                    1,
+                    1,
+                ))),
+                Object::Integer(24),
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::SetGlobal, &[0]),
+                Instruction::new(OpCode::GetGlobal, &[0]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::Call, &[1]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            r#"
+            let manyArg = fn(a, b, c) { a; b; c; };
+            manyArg(24, 25, 26); "#,
+            &[
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
+                        Instruction::new(OpCode::GetLocal, &[0]),
+                        Instruction::new(OpCode::Pop, &[]),
+                        Instruction::new(OpCode::GetLocal, &[1]),
+                        Instruction::new(OpCode::Pop, &[]),
+                        Instruction::new(OpCode::GetLocal, &[2]),
+                        Instruction::new(OpCode::ReturnValue, &[]),
+                    ]
+                    .into_iter()
+                    .fold(Bytes::default(), |mut b, i| {
+                        b.push(i);
+                        b
+                    }),
+                    3,
+                    3,
+                ))),
+                Object::Integer(24),
+                Object::Integer(25),
+                Object::Integer(26),
+            ],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::SetGlobal, &[0]),
+                Instruction::new(OpCode::GetGlobal, &[0]),
+                Instruction::new(OpCode::Constant, &[2]),
+                Instruction::new(OpCode::Constant, &[3]),
+                Instruction::new(OpCode::Constant, &[4]),
+                Instruction::new(OpCode::Call, &[3]),
                 Instruction::new(OpCode::Pop, &[]),
             ]
         ),
@@ -558,8 +630,8 @@ fn function_scopes() {
             fn() { num } "#,
             &[
                 Object::Integer(55),
-                Object::CompiledFunc(Rc::new(CompiledFuncObj {
-                    instructions: [
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
                         Instruction::new(OpCode::GetGlobal, &[0]),
                         Instruction::new(OpCode::ReturnValue, &[]),
                     ]
@@ -568,8 +640,9 @@ fn function_scopes() {
                         b.push(i);
                         b
                     }),
-                    locals: 0,
-                }))
+                    0,
+                    0,
+                )))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[1]),
@@ -586,8 +659,8 @@ fn function_scopes() {
             } "#,
             &[
                 Object::Integer(55),
-                Object::CompiledFunc(Rc::new(CompiledFuncObj {
-                    instructions: [
+                Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                    [
                         Instruction::new(OpCode::Constant, &[1]),
                         Instruction::new(OpCode::SetLocal, &[0]),
                         Instruction::new(OpCode::GetLocal, &[0]),
@@ -598,8 +671,9 @@ fn function_scopes() {
                         b.push(i);
                         b
                     }),
-                    locals: 1,
-                }))
+                    1,
+                    0,
+                )))
             ],
             &[
                 Instruction::new(OpCode::Constant, &[2]),
@@ -626,14 +700,16 @@ fn test(cases: &[(&str, &[Object], &[Instruction])]) {
 
         assert!(
             bytecode.instructions == expected_bytes,
-            "Wrong instructions. expected:\n{}got:\n{}",
+            "Wrong instructions for \n{}\nExpected:\n{}got:\n{}",
+            input,
             expected_bytes,
             bytecode.instructions,
         );
 
         assert!(
             &bytecode.constants[1..] == *consts,
-            "Wrong constants. expected:\n{}got:\n{}",
+            "Wrong constants for \n{}\nExpected:\n{}got:\n{}",
+            input,
             print_objs(consts),
             print_objs(&bytecode.constants[1..]),
         );

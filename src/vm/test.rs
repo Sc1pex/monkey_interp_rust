@@ -13,6 +13,12 @@ macro_rules! test {
     };
 }
 
+macro_rules! test_err {
+    ($($case:expr),* $(,)?) => {
+        test_err(&[$($case),*])
+    };
+}
+
 #[test]
 fn integer_math() {
     test!(
@@ -311,6 +317,64 @@ fn funcs_with_bindings() {
     )
 }
 
+#[test]
+fn funcs_with_arguments() {
+    test!(
+        (
+            r#"
+            let identity = fn(a) { a; };
+            identity(4); "#,
+            Object::Integer(4)
+        ),
+        (
+            r#"
+            let sum = fn(a, b) { a + b; };
+            sum(1, 3); "#,
+            Object::Integer(4)
+        ),
+        (
+            r#"
+            let sum = fn(a, b) {
+                let c = a + b;
+                c;
+            };
+            sum(1, 2); "#,
+            Object::Integer(3)
+        ),
+        (
+            r#"
+            let globalNum = 10;
+            let sum = fn(a, b) {
+                let c = a + b;
+                c + globalNum;
+            };
+            let outer = fn() {
+                sum(1, 2) + sum(3, 4) + globalNum;
+            };
+            outer() + globalNum; "#,
+            Object::Integer(50)
+        )
+    )
+}
+
+#[test]
+fn call_with_wrong_arguments() {
+    test_err!(
+        (
+            "fn() { 1; }(1);",
+            "wrong number of arguments. expected 0, got 1"
+        ),
+        (
+            "fn(a) { a; }();",
+            "wrong number of arguments. expected 1, got 0"
+        ),
+        (
+            "fn(a, b) { a + b; }(1);",
+            "wrong number of arguments. expected 2, got 1"
+        ),
+    )
+}
+
 fn test(cases: &[(&str, Object)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());
@@ -330,5 +394,29 @@ fn test(cases: &[(&str, Object)]) {
         vm.run().unwrap();
 
         assert_eq!(vm.last_popped(), exp, "{}", s);
+    }
+}
+
+fn test_err(cases: &[(&str, &str)]) {
+    for (inp, exp) in cases {
+        let lexer = Lexer::new(inp.to_string());
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse().expect("Skill issue");
+
+        let mut compiler = Compiler::default();
+        compiler.compile(program).expect("Skill issue");
+        let bytecode = compiler.bytecode();
+        let s = format!("{}", bytecode.instructions);
+        println!("{}", s);
+        for c in &bytecode.constants {
+            println!("{}", c);
+        }
+
+        let mut vm = Vm::new(bytecode);
+
+        match vm.run() {
+            Ok(_) => panic!("test did not error:\n{}", inp),
+            Err(e) => assert_eq!(&e, exp),
+        }
     }
 }
