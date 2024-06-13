@@ -1,5 +1,5 @@
-use super::{builtin::Builtin, Environment};
-use crate::{ast::FuncExpr, compiler::Bytes};
+use super::Environment;
+use crate::{ast::FuncExpr, builtin::Builtin, compiler::Bytes};
 use std::{cell::RefCell, collections::HashMap, fmt::Display, hash::Hash, rc::Rc};
 
 #[derive(Debug, PartialEq, Eq, Clone)]

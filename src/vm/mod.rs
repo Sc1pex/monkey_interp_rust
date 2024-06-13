@@ -3,6 +3,7 @@
 use std::rc::Rc;
 
 use crate::{
+    builtin::Builtin,
     compiler::{Bytecode, Bytes, OpCode},
     eval::{CompiledFuncObj, Object},
 };
@@ -172,27 +173,7 @@ impl Vm {
                     let args: u8 = self.instructions().read(self.ip());
                     *self.ip_mut() += 1;
 
-                    let func = match self
-                        .stack
-                        .get(self.sp - 1 - args as usize)
-                        .expect("nothing to call")
-                    {
-                        Object::CompiledFunc(c) => c.clone(),
-                        o => return Err(format!("cannot call object {:?}", o)),
-                    };
-                    if args as usize != func.params {
-                        return Err(format!(
-                            "wrong number of arguments. expected {}, got {}",
-                            func.params, args
-                        ));
-                    }
-                    let locals = func.locals;
-                    self.push_frame(Frame {
-                        func,
-                        ip: 0,
-                        sp: self.sp - args as usize,
-                    });
-                    self.sp += locals;
+                    self.execute_call(args)?;
                 }
                 OpCode::ReturnValue => {
                     let val = self.pop();
@@ -216,6 +197,14 @@ impl Vm {
 
                     let val = self.stack[self.frame().sp + idx as usize].clone();
                     self.push(val)?;
+                }
+                OpCode::GetBuiltin => {
+                    let idx: u8 = self.instructions().read(self.ip());
+                    *self.ip_mut() += 1;
+
+                    let builtin =
+                        Builtin::from_u8(idx).ok_or(&format!("unknown builtin {}", idx))?;
+                    self.push(Object::Builtin(builtin))?;
                 }
                 _ => todo!(),
             }
@@ -252,6 +241,46 @@ impl Vm {
         let obj = self.stack[self.sp - 1].clone();
         self.sp -= 1;
         obj
+    }
+
+    fn execute_call(&mut self, args: u8) -> RunResult {
+        match self
+            .stack
+            .get(self.sp - 1 - args as usize)
+            .expect("nothing to call")
+        {
+            Object::CompiledFunc(c) => self.call_func(args, c.clone()),
+            Object::Builtin(b) => self.call_builtin(args, *b),
+            o => return Err(format!("cannot call object {:?}", o)),
+        }
+    }
+
+    fn call_builtin(&mut self, args: u8, b: Builtin) -> RunResult {
+        let args: Vec<Object> = self.stack[(self.sp - args as usize)..self.sp]
+            .into_iter()
+            .map(|x| x.clone())
+            .collect();
+        let a: Vec<&Object> = args.iter().collect();
+
+        let o: Object = b.call(a)?;
+        self.push(o)
+    }
+
+    fn call_func(&mut self, args: u8, func: Rc<CompiledFuncObj>) -> RunResult {
+        if args as usize != func.params {
+            return Err(format!(
+                "wrong number of arguments. expected {}, got {}",
+                func.params, args
+            ));
+        }
+        let locals = func.locals;
+        self.push_frame(Frame {
+            func,
+            ip: 0,
+            sp: self.sp - args as usize,
+        });
+        self.sp += locals;
+        Ok(())
     }
 
     fn execute_index_op(&mut self, left: Object, index: Object) -> RunResult {

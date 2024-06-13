@@ -683,6 +683,51 @@ fn function_scopes() {
     )
 }
 
+#[test]
+fn builtins() {
+    test!(
+        (
+            r#"
+            len([]);
+            push([], 1); "#,
+            &[Object::Integer(1)],
+            &[
+                Instruction::new(OpCode::GetBuiltin, &[0]),
+                Instruction::new(OpCode::Array, &[0]),
+                Instruction::new(OpCode::Call, &[1]),
+                Instruction::new(OpCode::Pop, &[]),
+                Instruction::new(OpCode::GetBuiltin, &[4]),
+                Instruction::new(OpCode::Array, &[0]),
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Call, &[2]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+        (
+            "fn() { len([]) }",
+            &[Object::CompiledFunc(Rc::new(CompiledFuncObj::new(
+                [
+                    Instruction::new(OpCode::GetBuiltin, &[0]),
+                    Instruction::new(OpCode::Array, &[0]),
+                    Instruction::new(OpCode::Call, &[1]),
+                    Instruction::new(OpCode::ReturnValue, &[]),
+                ]
+                .into_iter()
+                .fold(Bytes::default(), |mut b, i| {
+                    b.push(i);
+                    b
+                }),
+                0,
+                0,
+            )))],
+            &[
+                Instruction::new(OpCode::Constant, &[1]),
+                Instruction::new(OpCode::Pop, &[]),
+            ]
+        ),
+    )
+}
+
 fn test(cases: &[(&str, &[Object], &[Instruction])]) {
     for (input, consts, instrs) in cases {
         let lexer = Lexer::new(input.to_string());

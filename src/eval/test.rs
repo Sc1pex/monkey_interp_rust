@@ -327,7 +327,7 @@ fn builtin_len() {
         ),
         (
             r#"len("one", "two")"#,
-            Err("wrong number of arguments. got=2, want=1".into())
+            Err("wrong number of arguments. expected 1, got 2".into())
         ),
         (r#"len([1, 2, 3, 4])"#, Ok(Rc::new(Object::Integer(4)))),
     )
@@ -347,7 +347,7 @@ fn builtin_first() {
         ),
         (
             r#"first("one", "two")"#,
-            Err("wrong number of arguments. got=2, want=1".into())
+            Err("wrong number of arguments. expected 1, got 2".into())
         ),
     )
 }
@@ -366,7 +366,7 @@ fn builtin_last() {
         ),
         (
             r#"last("one", "two")"#,
-            Err("wrong number of arguments. got=2, want=1".into())
+            Err("wrong number of arguments. expected 1, got 2".into())
         ),
     )
 }
@@ -397,7 +397,7 @@ fn builtin_rest() {
         ),
         (
             r#"rest("one", "two")"#,
-            Err("wrong number of arguments. got=2, want=1".into())
+            Err("wrong number of arguments. expected 1, got 2".into())
         ),
     )
 }
@@ -447,7 +447,7 @@ fn builtin_push() {
         ),
         (
             r#"push([])"#,
-            Err("wrong number of arguments. got=1, want=2".into())
+            Err("wrong number of arguments. expected 2, got 1".into())
         ),
     )
 }

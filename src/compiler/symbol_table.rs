@@ -10,6 +10,7 @@ pub struct Symbol {
 pub enum Scope {
     Global,
     Local,
+    Builtin,
 }
 
 pub type SymbolTableRef = Rc<RefCell<SymbolTable>>;
@@ -18,6 +19,7 @@ pub type SymbolTableRef = Rc<RefCell<SymbolTable>>;
 pub struct SymbolTable {
     pub outer: Option<SymbolTableRef>,
     store: HashMap<String, Symbol>,
+    stored: usize,
 }
 
 impl SymbolTable {
@@ -25,6 +27,7 @@ impl SymbolTable {
         Rc::new(RefCell::new(Self {
             outer: None,
             store: HashMap::default(),
+            stored: 0,
         }))
     }
 
@@ -32,6 +35,7 @@ impl SymbolTable {
         Rc::new(RefCell::new(Self {
             outer: Some(outer.clone()),
             store: HashMap::default(),
+            stored: 0,
         }))
     }
 
@@ -44,6 +48,16 @@ impl SymbolTable {
 
         let sym = Symbol {
             scope,
+            index: self.stored as u16,
+        };
+        self.stored += 1;
+        self.store.insert(name.to_string(), sym);
+        self.store[name]
+    }
+
+    pub fn define_builtin(&mut self, name: &str) -> Symbol {
+        let sym = Symbol {
+            scope: Scope::Builtin,
             index: self.store.len() as u16,
         };
         self.store.insert(name.to_string(), sym);

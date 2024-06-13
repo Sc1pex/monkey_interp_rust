@@ -2,15 +2,14 @@
 
 use crate::{
     ast::{ArrayExpr, Expression, HashExpr, Ident, Program, Statement},
+    builtin::Builtin,
     lexer::TokenType,
 };
-use builtin::Builtin;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 pub use env::Environment;
 pub use object::*;
 
-mod builtin;
 mod env;
 mod object;
 
@@ -92,7 +91,7 @@ fn eval_expr(e: &Expression, env: &Rc<RefCell<Environment>>) -> EvalResult {
 fn eval_ident(ident: &Ident, env: &Rc<RefCell<Environment>>) -> EvalResult {
     if let Some(r) = env.borrow().get(ident) {
         Ok(r)
-    } else if let Some(b) = Builtin::from_ident(ident) {
+    } else if let Some(b) = Builtin::from_ident_obj(ident) {
         Ok(b)
     } else {
         Err(format!("identifier not found: {}", ident))
@@ -234,7 +233,10 @@ fn eval_string_infix_op(left: &str, op: TokenType, right: &str) -> EvalResult {
 fn apply_func(func: Rc<Object>, args: Vec<Rc<Object>>) -> EvalResult {
     let func = match &*func {
         Object::Func(f) => f,
-        Object::Builtin(b) => return b.call(args),
+        Object::Builtin(b) => {
+            let args: Vec<_> = args.iter().map(|x| &**x).collect();
+            return b.call(args);
+        }
         _ => return Err(format!("not a function: {}", func.kind())),
     };
 

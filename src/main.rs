@@ -5,6 +5,7 @@ use eval::{eval_program, Environment};
 use lexer::Lexer;
 
 mod ast;
+mod builtin;
 mod compiler;
 mod eval;
 mod lexer;

@@ -25,6 +25,7 @@ pub enum OpCode {
     GetGlobal,
     SetLocal,
     GetLocal,
+    GetBuiltin,
 
     Array,
     Hash,
@@ -60,6 +61,7 @@ impl OpCode {
             OpCode::GetGlobal => Definition::new("OpGetGlobal", &[2]),
             OpCode::SetLocal => Definition::new("OpSetLocal", &[1]),
             OpCode::GetLocal => Definition::new("OpGetLocal", &[1]),
+            OpCode::GetBuiltin => Definition::new("OpGetLocal", &[1]),
 
             OpCode::Array => Definition::new("OpArray", &[2]),
             OpCode::Hash => Definition::new("OpHash", &[2]),

@@ -28,9 +28,15 @@ pub struct Compiler {
 
 impl Default for Compiler {
     fn default() -> Self {
+        let symbol_table = SymbolTable::empty();
+        let builtins = ["len", "first", "last", "rest", "push", "puts"];
+        for b in builtins {
+            symbol_table.borrow_mut().define_builtin(b);
+        }
+
         Self {
             constants: vec![Object::Null],
-            symbol_table: SymbolTable::empty(),
+            symbol_table,
             scopes: vec![Scope::default()],
         }
     }
@@ -86,6 +92,7 @@ impl Compiler {
                     symbol_table::Scope::Local => {
                         self.emit(Instruction::new(OpCode::SetLocal, &[sym.index as u32]))
                     }
+                    _ => unreachable!(),
                 };
                 Ok(())
             }
@@ -117,6 +124,9 @@ impl Compiler {
                     }
                     symbol_table::Scope::Local => {
                         self.emit(Instruction::new(OpCode::GetLocal, &[sym.index as u32]));
+                    }
+                    symbol_table::Scope::Builtin => {
+                        self.emit(Instruction::new(OpCode::GetBuiltin, &[sym.index as u32]));
                     }
                 };
             }

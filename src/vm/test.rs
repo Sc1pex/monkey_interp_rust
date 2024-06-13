@@ -375,6 +375,109 @@ fn call_with_wrong_arguments() {
     )
 }
 
+#[test]
+fn builtins() {
+    test!(
+        (r#"len("")"#, Object::Integer(0)),
+        (r#"len("four")"#, Object::Integer(4)),
+        (r#"len("hello world")"#, Object::Integer(11)),
+        (r#"len([1, 2, 3, 4])"#, Object::Integer(4)),
+        (r#"first(["a", "b"])"#, Object::String("a".into())),
+        (r#"first([])"#, Object::Null),
+        (r#"last(["a", "b"])"#, Object::String("b".into())),
+        (r#"last([])"#, Object::Null),
+        (
+            r#"rest(["a", "b", "c"])"#,
+            Object::Array(ArrayObj {
+                elements: vec![
+                    Rc::new(Object::String("b".into())),
+                    Rc::new(Object::String("c".into()))
+                ]
+            })
+        ),
+        (
+            r#"rest(["a"])"#,
+            Object::Array(ArrayObj { elements: vec![] })
+        ),
+        (r#"rest([])"#, Object::Array(ArrayObj { elements: vec![] })),
+        (
+            r#"push(["a", "b"], "c")"#,
+            Object::Array(ArrayObj {
+                elements: vec![
+                    Rc::new(Object::String("a".into())),
+                    Rc::new(Object::String("b".into())),
+                    Rc::new(Object::String("c".into()))
+                ]
+            })
+        ),
+        (
+            r#"push(["a"], 1)"#,
+            Object::Array(ArrayObj {
+                elements: vec![
+                    Rc::new(Object::String("a".into())),
+                    Rc::new(Object::Integer(1))
+                ]
+            })
+        ),
+        (
+            r#"push(["a"], [1])"#,
+            Object::Array(ArrayObj {
+                elements: vec![
+                    Rc::new(Object::String("a".into())),
+                    Rc::new(Object::Array(ArrayObj {
+                        elements: vec![Rc::new(Object::Integer(1))]
+                    }))
+                ]
+            })
+        ),
+        (
+            r#"push([], "bar")"#,
+            Object::Array(ArrayObj {
+                elements: vec![Rc::new(Object::String("bar".into()))]
+            })
+        ),
+    );
+    test_err!(
+        (r#"len(1)"#, "argument to `len` not supported, got INTEGER"),
+        (
+            r#"len("one", "two")"#,
+            "wrong number of arguments. expected 1, got 2"
+        ),
+        (
+            r#"first(1)"#,
+            "argument to `first` not supported, got INTEGER"
+        ),
+        (
+            r#"first("one", "two")"#,
+            "wrong number of arguments. expected 1, got 2"
+        ),
+        (
+            r#"last(1)"#,
+            "argument to `last` not supported, got INTEGER"
+        ),
+        (
+            r#"last("one", "two")"#,
+            "wrong number of arguments. expected 1, got 2"
+        ),
+        (
+            r#"rest(1)"#,
+            "argument to `rest` not supported, got INTEGER"
+        ),
+        (
+            r#"rest("one", "two")"#,
+            "wrong number of arguments. expected 1, got 2"
+        ),
+        (
+            r#"push(1, 2)"#,
+            "argument to `push` not supported, got INTEGER"
+        ),
+        (
+            r#"push([])"#,
+            "wrong number of arguments. expected 2, got 1"
+        ),
+    )
+}
+
 fn test(cases: &[(&str, Object)]) {
     for (inp, exp) in cases {
         let lexer = Lexer::new(inp.to_string());
@@ -385,15 +488,11 @@ fn test(cases: &[(&str, Object)]) {
         compiler.compile(program).expect("Skill issue");
         let bytecode = compiler.bytecode();
         let s = format!("{}", bytecode.instructions);
-        println!("{}", s);
-        for c in &bytecode.constants {
-            println!("{}", c);
-        }
 
         let mut vm = Vm::new(bytecode);
         vm.run().unwrap();
 
-        assert_eq!(vm.last_popped(), exp, "{}", s);
+        assert_eq!(vm.last_popped(), exp, "{}\n{}", s, inp);
     }
 }
 
@@ -406,11 +505,6 @@ fn test_err(cases: &[(&str, &str)]) {
         let mut compiler = Compiler::default();
         compiler.compile(program).expect("Skill issue");
         let bytecode = compiler.bytecode();
-        let s = format!("{}", bytecode.instructions);
-        println!("{}", s);
-        for c in &bytecode.constants {
-            println!("{}", c);
-        }
 
         let mut vm = Vm::new(bytecode);
 
